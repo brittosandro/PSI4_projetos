@@ -1,2 +1,3 @@
 # PSI4_projetos
-Projetos para comparações de forças intermoleculares utilizando PSI4
+
+Scripts que comparam métodos para o cálculo de forças intermoleculares, utilizando principalmente PSI4.
