@@ -8,23 +8,29 @@ import os
 import numpy as np
 
 
-# Esse script cálcula as constante de van der Waals.
-# a partir de potenciais analíticos derivados de situações gerais
+# Esse script cálcula as constante de van der Waals
+# a partir de potenciais analíticos derivados de interações
 # entre moléculas polares e apolares.
-# O script também calcula o potencial considerando a situação de
+# O script também calcula o potencial considerando o modelo de
 # esferas rígidas.
 
 
 def C_keeson(T):
     '''
     Essa função calcula a constante de Keeson.
-    A função retorna o valor da constante ck em J*m**6 (joule x metros a sexta).
-    - Momento de dipolo (mu)-> É escrito em C*m (coulomb x metro).
-    - epsilon_0 -> C**2/N*m**2.
-    - constante de Boltzmann (kb) -> J/K.
-    - Temperatura (T) -> kelvin.
-    - Constante dielétrica (k) -> adimencional.
+    A função retorna o valor da constante de Keesnon (ck) em
+    J*m**6 (joule x metros a sexta).
+    
+    Unidades dos Parâmetros
+    ----------------------
+    
+    - Momento de dipolo (mu): C*m (coulomb x metro).
+    - epsilon_0: C**2/N*m**2.
+    - constante de Boltzmann (kb): J/K.
+    - Temperatura (T): kelvin (K).
+    - Constante dielétrica (k): adimencional.
     '''
+    
     pi = 3.1416
     epsilon_0 = 8.85e-12
     k = 1
@@ -39,12 +45,18 @@ def C_keeson(T):
 def C_debye():
     '''
     Essa função calcula a constante de Debye.
-    A função retorna o valor da constante cd em J*m**6 (joule x metros a sexta).
-    - Momento de dipolo (mu)-> É escrito em C*m (coulomb x metro).
-    - epsilon_0 -> C**2/N*m**2.
-    - Constante dielétrica (k) -> adimencional.
-    - A polarizabilidade volumetrica (alfa_0) -> m**3.
+    A função retorna o valor da constante de Debye (cd)
+    em J*m**6 (joule x metros a sexta).
+    
+    Unidades dos Parâmetros
+    ----------------------
+    
+    - Momento de dipolo (mu): C*m (coulomb x metro).
+    - epsilon_0: C**2/N*m**2.
+    - Constante dielétrica (k): adimencional.
+    - A polarizabilidade volumetrica (alfa_0): m**3.
     '''
+    
     pi = 3.1416
     epsilon_0 = 8.85e-12
     k = 1
@@ -59,10 +71,16 @@ def C_debye():
 def C_london():
     '''
     Essa função calcula a constante de London.
-    A função retorna o valor da constante em J*m**6 (joule x metros a sexta).
-    A Polarizabilidade é descrita em m**3.
-    A energia de inonização é descrita em eV.
+    A função retorna o valor da constante de London (Cl)
+    em J*m**6 (joule x metros a sexta).
+    
+    Unidades dos Parâmetros
+    ----------------------
+    
+    A Polarizabilidade: m**3.
+    A energia de inonização: eV.
     '''
+    
     # Energia de ionização da molécula 1
     I1 = 11.4759
     # Energia de ionização da molécula 1
@@ -87,7 +105,7 @@ def C_vdW(T):
 
 def U(T, r, r0):
     '''
-    Potencial definito como esferas rígidas.
+    Potencial modelado como esferas rígidas.
     '''
     if r > r0:
         return - C_vdW(T) / (r**6)
