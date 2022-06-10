@@ -13,7 +13,7 @@ geometrias_amonia = glob('*_sapt.xyz')
 #print(geometrias_amonia)
 
 #metodos = ['sapt0', 'sapt2', 'sapt2+']
-metodos = ['sapt0']
+metodos = ['sapt0', 'sapt2', 'sapt2+', 'sapt2+(3)', 'sapt2+3', ]
 bases = ['jun-cc-pvdz']
 gases_nobres = ['He', 'Ne', 'Ar', 'Kr']
 #gases_nobres = ['He']
