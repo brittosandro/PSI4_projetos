@@ -60,28 +60,18 @@ for dir, subdirs, arqs in os.walk(diretorio_corrente):
         if sitio2 in caminho(dir, arq):
             if molecula1 in caminho(dir, arq):
                 metodo_base = caminho(dir, arq).replace('./', '').split('/')[1].replace('_' + sitio2 +'_', '/').replace('.dat', '')
-                #print(metodo_base)
-                dados = np.loadtxt(caminho(dir, arq), comments='#')
-                dist = dados[:, 0]
-                esapt = dados[:, 5]
-                indice_menor_energia_sapt = list(esapt).index(min(esapt))
-                #print('Distancia    Minimo SAPT   indice SAPT')
-                #print(f'{dist[indice_menor_energia_sapt]}         {min(esapt)}         {indice_menor_energia_sapt}')
-                #print()
-                sitio2_mol1[metodo_base] = dist[indice_menor_energia_sapt], min(esapt)
+                metodo_base = pega_metodo_base(sitio1)
+                dist, esapt = distancia_energia_sapt(caminho(dir, arq))
+                ind_menor_en = indice_para_menor_energia_sapt(esapt)
+                sitio2_mol1[metodo_base] = dist[ind_menor_en], min(esapt)
 
         if sitio3 in caminho(dir, arq):
             if molecula1 in caminho(dir, arq):
                 metodo_base = caminho(dir, arq).replace('./', '').split('/')[1].replace('_' + sitio3 + '_', '/').replace('.dat', '')
-                #print(metodo_base)
-                dados = np.loadtxt(caminho(dir, arq), comments='#')
-                dist = dados[:, 0]
-                esapt = dados[:, 5]
-                indice_menor_energia_sapt = list(esapt).index(min(esapt))
-                #print('Distancia    Minimo SAPT   indice SAPT')
-                #print(f'{dist[indice_menor_energia_sapt]}         {min(esapt)}         {indice_menor_energia_sapt}')
-                #print()
-                sitio3_mol1[metodo_base] = dist[indice_menor_energia_sapt], min(esapt)
+                metodo_base = pega_metodo_base(sitio1)
+                dist, esapt = distancia_energia_sapt(caminho(dir, arq))
+                ind_menor_en = indice_para_menor_energia_sapt(esapt)
+                sitio3_mol1[metodo_base] = dist[ind_menor_en], min(esapt)
 
 print(f'Sitio 1 {molecula1}')
 print('Dicionario NÃO ORDENADO')
