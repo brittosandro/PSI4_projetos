@@ -37,6 +37,22 @@ def indice_para_menor_energia_sapt(esapt):
     '''
     return list(esapt).index(min(esapt))
 
+def ordena_dicionario(d):
+    '''
+    Essa função recebe um dicionario cuja chave designa o método e a base do
+    cálculo e o valor é uma tupla com a distancia de equilibrio e a energia
+    sapt total. A função retorna um dicionario em ordem crescente de energia
+    sapt. Por exemplo: {
+    'sapt0/aug-cc-pvtz': (3.8, -14.387572),
+    'sapt2+/aug-cc-pvtz': (3.8, -14.3323951),
+    'sapt2+3/aug-cc-pvtz': (3.8, -14.0726924)
+    }
+    '''
+    dic_ordenado = {}
+    for item in sorted(d, key=d.get):
+        dic_ordenado[item] = d[item]
+    return dic_ordenado
+
 molecula1 = 'Ar'
 molecula2 = 'He'
 molecula3 = 'Ne'
@@ -71,13 +87,14 @@ for dir, subdirs, arqs in os.walk(diretorio_corrente):
                 dist, esapt = distancia_energia_sapt(caminho(dir, arq))
                 ind_menor_en = indice_para_menor_energia_sapt(esapt)
                 sitio1_mol1[metodo_base] = dist[ind_menor_en], min(esapt)
+                sitio1_mol1_ord = ordena_dicionario(sitio1_mol1)
 
             if molecula2 in caminho(dir, arq):
                 metodo_base = pega_metodo_base(sitio1)
                 dist, esapt = distancia_energia_sapt(caminho(dir, arq))
                 ind_menor_en = indice_para_menor_energia_sapt(esapt)
                 sitio1_mol2[metodo_base] = dist[ind_menor_en], min(esapt)
-            
+
             if molecula3 in caminho(dir, arq):
                 metodo_base = pega_metodo_base(sitio1)
                 dist, esapt = distancia_energia_sapt(caminho(dir, arq))
@@ -88,7 +105,7 @@ for dir, subdirs, arqs in os.walk(diretorio_corrente):
                 metodo_base = pega_metodo_base(sitio1)
                 dist, esapt = distancia_energia_sapt(caminho(dir, arq))
                 ind_menor_en = indice_para_menor_energia_sapt(esapt)
-                sitio1_mol4[metodo_base] = dist[ind_menor_en], min(esapt)                    
+                sitio1_mol4[metodo_base] = dist[ind_menor_en], min(esapt)
 
         if sitio2 in caminho(dir, arq):
             if molecula1 in caminho(dir, arq):
@@ -113,7 +130,7 @@ for dir, subdirs, arqs in os.walk(diretorio_corrente):
                 metodo_base = pega_metodo_base(sitio2)
                 dist, esapt = distancia_energia_sapt(caminho(dir, arq))
                 ind_menor_en = indice_para_menor_energia_sapt(esapt)
-                sitio2_mol4[metodo_base] = dist[ind_menor_en], min(esapt)        
+                sitio2_mol4[metodo_base] = dist[ind_menor_en], min(esapt)
 
         if sitio3 in caminho(dir, arq):
             if molecula1 in caminho(dir, arq):
@@ -138,7 +155,7 @@ for dir, subdirs, arqs in os.walk(diretorio_corrente):
                 metodo_base = pega_metodo_base(sitio3)
                 dist, esapt = distancia_energia_sapt(caminho(dir, arq))
                 ind_menor_en = indice_para_menor_energia_sapt(esapt)
-                sitio3_mol4[metodo_base] = dist[ind_menor_en], min(esapt)        
+                sitio3_mol4[metodo_base] = dist[ind_menor_en], min(esapt)
 
 print(f'Sitio 1 {molecula1}')
 print('Dicionario NÃO ORDENADO')
@@ -163,4 +180,3 @@ print(f'Sitio 3 {molecula1}')
 print(sitio3_mol1)
 print()
 '''
-
