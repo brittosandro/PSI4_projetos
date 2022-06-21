@@ -16,7 +16,7 @@ def pega_metodo_base(nome_sitio):
     no formato: metodo/base.
     '''
     mb =  caminho(dir, arq).replace('./', '').split('/')[1].replace('_'
-                                   + sitio1 + '_', '/').replace('.dat', '')
+                                   + nome_sitio + '_', '/').replace('.dat', '')
     return mb
 
 def distancia_energia_sapt(caminho):
