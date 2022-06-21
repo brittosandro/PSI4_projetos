@@ -57,21 +57,37 @@ for dir, subdirs, arqs in os.walk(diretorio_corrente):
                 ind_menor_en = indice_para_menor_energia_sapt(esapt)
                 sitio1_mol1[metodo_base] = dist[ind_menor_en], min(esapt)
 
+            if molecula2 in caminho(dir, arq):
+                metodo_base = pega_metodo_base(sitio1)
+                dist, esapt = distancia_energia_sapt(caminho(dir, arq))
+                ind_menor_en = indice_para_menor_energia_sapt(esapt)
+                sitio1_mol2[metodo_base] = dist[ind_menor_en], min(esapt)    
+
         if sitio2 in caminho(dir, arq):
             if molecula1 in caminho(dir, arq):
-                metodo_base = caminho(dir, arq).replace('./', '').split('/')[1].replace('_' + sitio2 +'_', '/').replace('.dat', '')
-                metodo_base = pega_metodo_base(sitio1)
+                metodo_base = pega_metodo_base(sitio2)
                 dist, esapt = distancia_energia_sapt(caminho(dir, arq))
                 ind_menor_en = indice_para_menor_energia_sapt(esapt)
                 sitio2_mol1[metodo_base] = dist[ind_menor_en], min(esapt)
 
+            if molecula2 in caminho(dir, arq):
+                metodo_base = pega_metodo_base(sitio2)
+                dist, esapt = distancia_energia_sapt(caminho(dir, arq))
+                ind_menor_en = indice_para_menor_energia_sapt(esapt)
+                sitio2_mol2[metodo_base] = dist[ind_menor_en], min(esapt)    
+
         if sitio3 in caminho(dir, arq):
             if molecula1 in caminho(dir, arq):
-                metodo_base = caminho(dir, arq).replace('./', '').split('/')[1].replace('_' + sitio3 + '_', '/').replace('.dat', '')
-                metodo_base = pega_metodo_base(sitio1)
+                metodo_base = pega_metodo_base(sitio3)
                 dist, esapt = distancia_energia_sapt(caminho(dir, arq))
                 ind_menor_en = indice_para_menor_energia_sapt(esapt)
                 sitio3_mol1[metodo_base] = dist[ind_menor_en], min(esapt)
+
+            if molecula2 in caminho(dir, arq):
+                metodo_base = pega_metodo_base(sitio3)
+                dist, esapt = distancia_energia_sapt(caminho(dir, arq))
+                ind_menor_en = indice_para_menor_energia_sapt(esapt)
+                sitio3_mol2[metodo_base] = dist[ind_menor_en], min(esapt)    
 
 print(f'Sitio 1 {molecula1}')
 print('Dicionario NÃO ORDENADO')
