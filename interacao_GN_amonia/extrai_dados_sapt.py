@@ -88,7 +88,7 @@ for dir, subdirs, arqs in os.walk(diretorio_corrente):
                 ind_menor_en = indice_para_menor_energia_sapt(esapt)
                 sitio1_mol1[metodo_base] = dist[ind_menor_en], min(esapt)
                 sitio1_mol1_ord = ordena_dicionario(sitio1_mol1)
-                
+
             if molecula2 in caminho(dir, arq):
                 metodo_base = pega_metodo_base(sitio1)
                 dist, esapt = distancia_energia_sapt(caminho(dir, arq))
@@ -178,4 +178,40 @@ print()
 
 print(f'Sitio 3 {molecula1}')
 print(sitio3_mol1_ord)
+print('-'*95)
+
+print(f'Sitio 1 {molecula2}')
+print(sitio1_mol2_ord)
+print()
+
+print(f'Sitio 2 {molecula2}')
+print(sitio2_mol2_ord)
+print()
+
+print(f'Sitio 3 {molecula2}')
+print(sitio3_mol2_ord)
+print('-'*95)
+
+print(f'Sitio 1 {molecula3}')
+print(sitio1_mol3_ord)
+print()
+
+print(f'Sitio 2 {molecula3}')
+print(sitio2_mol3_ord)
+print()
+
+print(f'Sitio 3 {molecula3}')
+print(sitio3_mol3_ord)
+print('-'*95)
+
+print(f'Sitio 1 {molecula4}')
+print(sitio1_mol4_ord)
+print()
+
+print(f'Sitio 2 {molecula4}')
+print(sitio2_mol4_ord)
+print()
+
+print(f'Sitio 3 {molecula4}')
+print(sitio3_mol4_ord)
 print('-'*95)
