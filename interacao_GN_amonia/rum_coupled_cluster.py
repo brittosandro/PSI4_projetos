@@ -129,13 +129,7 @@ for geo in geometrias_amonia:
                 sitio_inte = geo.replace('sapt.xyz', '').replace('amonia', '')
                 nome_arq_out = metodo +  sitio_inte + base + '.dat'
 
-                #time.sleep(2)
-                #with open(nome_arq_out, 'w') as f:
-                #    print(f'# Dist    Energia Eletrostatica       Energia Inducao        Energia Dispercao      Energia EXCH       Energia Sapt        Energia CT', end='\n', file=f)
-                #    for d, el, ei, ed, eex, es in zip(distancias, np.around(eelst, 7), np.around(eind, 7), np.around(edisp, 7),
-                #                                   np.around(eexch, 7), np.around(esapt, 7)):
-                #        print(f'{d:5.2f}  {el:16.7f}   {ei:25.7f}   {ed:20.7f}   {eex:20.7f}   {es:15.7f}', end='\n', file=f)
-
+           
                 with open(nome_arq_out, 'w') as f:
                     print(f'# Dist     Energia Total CCSD  Energia Total CCSD(T)', end='\n', file=f)
                     for d, eccsdint, eccsdtint in zip(distancias, np.around(Eint_ccsd, 7), np.around(Eint_ccsdt, 7)):
