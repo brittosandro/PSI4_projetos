@@ -46,9 +46,6 @@ def Eint(matriz):
 geometrias_amonia = glob('*_sapt.xyz')
 #print(geometrias_amonia)
 
-#metodos = ['sapt0', 'sapt2', 'sapt2+']
-#metodos = ['sapt0', 'sapt2', 'sapt2+', 'sapt2+(3)', 'sapt2+3', ]
-#metodos = ['ccsd(t)']
 metodos = ['ccsd(t)']
 bases = ['jun-cc-pvdz']
 #gases_nobres = ['He', 'Ne', 'Ar', 'Kr']
