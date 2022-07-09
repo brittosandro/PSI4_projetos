@@ -51,14 +51,13 @@ bases = ['jun-cc-pvdz']
 #gases_nobres = ['He', 'Ne', 'Ar', 'Kr']
 gases_nobres = ['He', 'Ne']
 
-for geo in geometrias_amonia:
-    with open(geo, 'r') as f:
-        str_geo = f.read()
-
-    for gas_nobre in gases_nobres:
-        for metodo in metodos:
-            for base in bases:
-                proc1 = subprocess.run(['mkdir', f'{gas_nobre}_{metodo}_{base}'])
+for gas_nobre in gases_nobres:
+    for metodo in metodos:
+        for base in bases:
+            proc1 = subprocess.run(['mkdir', f'{gas_nobre}_{metodo}_{base}'])
+            for geo in geometrias_amonia:
+                with open(geo, 'r') as f:
+                    str_geo = f.read()
 
                 distancias = np.arange(3.5, 11.1, 0.5)
                 # listas de energias com zeros
@@ -122,11 +121,9 @@ for geo in geometrias_amonia:
                     Eint_ccsd = Eint(eccsd)
                     Eint_ccsdt = Eint(eccsdt)
 
-
                 sitio_inte = geo.replace('sapt.xyz', '').replace('amonia', '')
                 nome_arq_out = metodo +  sitio_inte + base + '.dat'
 
-           
                 with open(nome_arq_out, 'w') as f:
                     print(f'# Dist     Energia Total CCSD  Energia Total CCSD(T)', end='\n', file=f)
                     for d, eccsdint, eccsdtint in zip(distancias, np.around(Eint_ccsd, 7), np.around(Eint_ccsdt, 7)):
