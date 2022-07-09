@@ -79,6 +79,9 @@ def cria_arquivo(nome, dist, eint1, eint2):
         for d, e1, e2 in zip(dist, np.around(eint1, 7), np.around(eint2, 7)):
             print(f'{d:5.2f} {e1:16.7f} {e2:16.7f}', end='\n', file=f)
 
+def move_arquivo(nome, gas, metodo, base):
+    subprocess.run(['mv', nome, f'{gas_nobre}_{metodo}_{base}'])
+
 geometrias_amonia = glob('*_sapt.xyz')
 #print(geometrias_amonia)
 
@@ -145,5 +148,4 @@ for gas_nobre in gases_nobres:
                 nome_arq_out = metodo +  sitio_inte + base + '.dat'
 
                 cria_arquivo(nome_arq_out, distancias, Eint_ccsd, Eint_ccsdt)
-
-                proc2 = subprocess.run(['mv', nome_arq_out, f'{gas_nobre}_{metodo}_{base}'])
+                move_arquivo(nome_arq_out, gas_nobre, metodo, base)
