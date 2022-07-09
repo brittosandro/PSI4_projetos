@@ -12,6 +12,13 @@ psi4.core.set_output_file('output.dat', False)
 
 numpy_memory = 10
 
+def cria_diretorio(gas, metodo, base):
+    '''
+    Essa função recebe três strings que correspondem ao gás nobre de interesse
+    o método e a base que iremos executar os cálculos e cria um novo diretorio
+    com as respectivas palavras.
+    '''
+    subprocess.run(['mkdir', f'{gas_nobre}_{metodo}_{base}'])
 
 def casando(ghost):
     def substitui(m):
@@ -54,7 +61,7 @@ gases_nobres = ['He', 'Ne']
 for gas_nobre in gases_nobres:
     for metodo in metodos:
         for base in bases:
-            proc1 = subprocess.run(['mkdir', f'{gas_nobre}_{metodo}_{base}'])
+            cria_diretorio(gas_nobre, metodo, base)
             for geo in geometrias_amonia:
                 with open(geo, 'r') as f:
                     str_geo = f.read()
