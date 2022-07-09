@@ -110,12 +110,7 @@ for gas_nobre in gases_nobres:
                     psi4.core.clean()
 
                     # Construindo a geometria do monomeroA
-                    monomeroA = """
-                    0 1 """ + """\n""" + str_geo + """--
-                    0 1 """ + """\n""" + f'Gh({gas_nobre})' + """  """ + str(distancias[i]) + """  0.0000000      0.0000000000
-                    units angstrom
-                    symmetry c1
-                    """
+                    monomeroA = input_geo(str_geo, f'Gh({gas_nobre})', distancias, i)
                     #constroi a molecula
                     psi4.geometry(monomeroA)
                     # calcula a energia
@@ -128,12 +123,7 @@ for gas_nobre in gases_nobres:
                     # Construindo a geometria do monomeroB
                     new_str_geo = re.sub(r'[a-zA-Z]', casando('Gh'), str_geo,
                                          flags=re.IGNORECASE)
-                    monomeroB = """
-                    0 1 """ + """\n""" + new_str_geo + """--
-                    0 1 """ + """\n""" + gas_nobre + """  """ + str(distancias[i]) + """  0.0000000      0.0000000000
-                    units angstrom
-                    symmetry c1
-                    """
+                    monomeroB = input_geo(str_geo, new_str_geo, distancias, i)
                     #constroi a molecula
                     psi4.geometry(monomeroB)
                     # calcula a energia
