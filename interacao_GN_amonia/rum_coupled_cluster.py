@@ -28,6 +28,22 @@ def cria_matriz(d):
     '''
     return np.zeros(((len(d)), 3))
 
+def input_geo(geo, gas, d, i):
+    '''
+    Como parâmetros de entrada a função recebe a geometria do composto (geo)
+    os símbolos dos gases nobres (gas) as distancias de cada interação (d) e
+    um contador i e retorna a geometria do input.
+    '''
+
+    input = """
+    0 1 """ + """\n""" + geo + """--
+    0 1 """ + """\n""" + gas + """  """ + str(d[i]) + """  0.000000   0.00000000
+    units angstrom
+    symmetry c1
+    """
+    return input
+
+
 def casando(ghost):
     def substitui(m):
         text = m.group()
@@ -80,12 +96,7 @@ for gas_nobre in gases_nobres:
 
                 for i, dist in enumerate(distancias):
                     # Construindo a geometria do Dimero
-                    dimero = """
-                    0 1 """ + """\n""" + str_geo + """--
-                    0 1 """ + """\n""" + gas_nobre + """  """ + str(distancias[i]) + """  0.0000000      0.0000000000
-                    units angstrom
-                    symmetry c1
-                    """
+                    dimero = input_geo(str_geo, gas_nobre, distancias, i)
                    # constroi a molecula
                     psi4.geometry(dimero)
                     # calcula a energia
