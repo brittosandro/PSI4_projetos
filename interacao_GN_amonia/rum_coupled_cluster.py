@@ -123,7 +123,7 @@ for gas_nobre in gases_nobres:
                     # Construindo a geometria do monomeroB
                     new_str_geo = re.sub(r'[a-zA-Z]', casando('Gh'), str_geo,
                                          flags=re.IGNORECASE)
-                    monomeroB = input_geo(str_geo, new_str_geo, distancias, i)
+                    monomeroB = input_geo(new_str_geo, gas_nobre, distancias, i)
                     #constroi a molecula
                     psi4.geometry(monomeroB)
                     # calcula a energia
