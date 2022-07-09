@@ -20,6 +20,14 @@ def cria_diretorio(gas, metodo, base):
     '''
     subprocess.run(['mkdir', f'{gas_nobre}_{metodo}_{base}'])
 
+def cria_matriz(d):
+    '''
+    Essa função recebe as distâncias em angstrom que correspondem ao
+    intervalo do cálculo e retorna uma matriz (array) com um conjunto de linhas
+    e três colunas cujo os elementos são zeros.
+    '''
+    return np.zeros(((len(d)), 3))
+
 def casando(ghost):
     def substitui(m):
         text = m.group()
@@ -67,9 +75,8 @@ for gas_nobre in gases_nobres:
                     str_geo = f.read()
 
                 distancias = np.arange(3.5, 11.1, 0.5)
-                # listas de energias com zeros
-                eccsd = np.zeros(((len(distancias)), 3))
-                eccsdt = np.zeros(((len(distancias)), 3))
+                eccsd = cria_matriz(distancias)
+                eccsdt = cria_matriz(distancias)
 
                 for i, dist in enumerate(distancias):
                     # Construindo a geometria do Dimero
