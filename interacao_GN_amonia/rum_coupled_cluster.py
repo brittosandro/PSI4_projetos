@@ -99,9 +99,9 @@ geometrias_amonia = glob('*_sapt.xyz')
 
 metodos = ['ccsd(t)', 'mp4']
 #bases = ['jun-cc-pvdz', 'aug-cc-pvdz', 'aug-cc-pvtz', 'aug-cc-pvqz']
-bases = ['jun-cc-pvdz',]
+bases = ['jun-cc-pvdz','6-31g']
 #gases_nobres = ['He', 'Ne', 'Ar', 'Kr']
-gases_nobres = ['He']
+gases_nobres = ['He', 'Ne']
 
 for gas_nobre in gases_nobres:
     for metodo in metodos:
@@ -112,18 +112,29 @@ for gas_nobre in gases_nobres:
                     str_geo = f.read()
 
                 distancias = np.arange(3.5, 4.1, 0.5)
+
                 eccsd = cria_matriz(distancias)
-                emp2 = cria_matriz(distancias)
                 eccsdt = cria_matriz(distancias)
+                emp2 = cria_matriz(distancias)
                 emp4 = cria_matriz(distancias)
+
+                eccsd_sem_cp = np.zeros((len(distancias)))
+                eccsd_cp = np.zeros((len(distancias)))
+                emp2_sem_cp = np.zeros((len(distancias)))
+                emp2_cp = np.zeros((len(distancias)))
+                eccsdt_sem_cp = np.zeros((len(distancias)))
+                eccsdt_cp = np.zeros((len(distancias)))
+                emp4_sem_cp = np.zeros((len(distancias)))
+                emp4_cp = np.zeros((len(distancias)))
 
                 for i, dist in enumerate(distancias):
                     # Construindo a geometria do Dimero
                     dimero = input_geo(str_geo, gas_nobre, distancias, i)
-                   # constroi a molecula
+                    # constroi a molecula
                     psi4.geometry(dimero)
-                    # calcula a energia
+                    #define nivel de cálculo
                     nivel = f'{metodo}/{base}'
+                    # calcula a energia
                     psi4.energy(nivel)
                     # adiona as energias decompostas em suas respectivas listas
                     # As energias sao convertidas de Hartree para meV.
@@ -140,7 +151,6 @@ for gas_nobre in gases_nobres:
                     #constroi a molecula
                     psi4.geometry(monomeroA)
                     # calcula a energia
-                    nivel = f'{metodo}/{base}'
                     psi4.energy(nivel)
                     if metodo == 'ccsd(t)':
                         eccsd[i, 1] = psi4.variable('CCSD TOTAL ENERGY') * 27211.4
@@ -157,7 +167,6 @@ for gas_nobre in gases_nobres:
                     #constroi a molecula
                     psi4.geometry(monomeroB)
                     # calcula a energia
-                    nivel = f'{metodo}/{base}'
                     psi4.energy(nivel)
                     if metodo == 'ccsd(t)':
                         eccsd[i, 2] = psi4.variable('CCSD TOTAL ENERGY') * 27211.4
@@ -166,6 +175,8 @@ for gas_nobre in gases_nobres:
                         emp2[i, 2] = psi4.variable('MP2 TOTAL ENERGY') * 27211.4
                         emp4[i, 2] = psi4.variable('MP4 TOTAL ENERGY') * 27211.4
                     psi4.core.clean()
+
+                    #bsse_type=['nocp', 'cp', 'vmfc']
 
                     #Calcula energia com Conuterpoise
                     if metodo == 'ccsd(t)':
