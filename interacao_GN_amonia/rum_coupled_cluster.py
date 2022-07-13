@@ -1,4 +1,5 @@
 from glob import glob
+
 import numpy as np
 import psi4
 import re
@@ -42,7 +43,6 @@ def input_geo(geo, gas, d, i):
     """
     return input
 
-
 def casando(ghost):
     def substitui(m):
         text = m.group()
@@ -63,50 +63,67 @@ def Eint(matriz):
     A função retorna a energia de interação (Eint) considerando a relação:
     Eint = EAB - (EA + EB)
     '''
-    #Essa é uma maneira ineficiente de calcular os elementos da matriaz
-    #EAB = [matriz[i, 0] for i in range(len(matriz))]
-    #EA = [matriz[i, 1] for i in range(len(matriz))]
-    #EB = [matriz[i, 2] for i in range(len(matriz))]
+    EAB = [matriz[i, 0] for i in range(len(matriz))]
+    EA = [matriz[i, 1] for i in range(len(matriz))]
+    EB = [matriz[i, 2] for i in range(len(matriz))]
 
-    #soma_AB = [i+j for i, j in zip(EA, EB)]
-    #Eint = [i-j for i, j in zip(EAB, soma_AB)]
-
-    #Essa é uma maneira eficiente de se calcular
-    EAB = matriz[:, 0]
-    EA = matriz[:, 1]
-    EB = matriz[:, 2]
-    Eint = EAB - (EA + EB)
+    soma_AB = [i+j for i, j in zip(EA, EB)]
+    Eint = [i-j for i, j in zip(EAB, soma_AB)]
 
     return Eint
 
-def cria_arquivo(metodo, nome, dist, eint1, eint2):
-    with open(nome, 'w') as f:
-        if metodo == 'ccsd(t)':
-            print(f'# Dist    Energia  CCSD  Energia CCSD(T)', end='\n', file=f)
-            for d, e1, e2 in zip(dist, np.around(eint1, 7), np.around(eint2, 7)):
-                print(f'{d:6.2f} {e1:14.7f} {e2:13.7f}', end='\n', file=f)
-        else:
-            print(f'# Dist    Energia  MP2   Energia MP4', end='\n', file=f)
-            for d, e1, e2 in zip(dist, np.around(eint1, 7), np.around(eint2, 7)):
-                print(f'{d:6.2f} {e1:13.7f} {e2:13.7f}', end='\n', file=f)
+def cria_arquivo(nome, metodo, dist, eint1, eint2):
+    if metodo == 'ccsd(t)':
+        with open(nome, 'w') as f:
+            print(f'# Distancia [angstrom]    |   Energia [meV]', end='\n', file=f)
+            print(f'# -----------------------------------------', end='\n', file=f)
+            print(f'# Dist   Eint CCSD(T)-NOCP  Eint CCSD(T)-CP', end='\n', file=f)
+            print(f'# -----------------------------------------', end='\n', file=f)
+            for d, e1, e2 in zip(dist, np.around(eint1, 6), np.around(eint2, 6)):
+                print(f'{d:5.2f} {e1:16.9f} {e2:17.9f}', end='\n', file=f)
+    if metodo == 'ccsd':
+        with open(nome, 'w') as f:
+            print(f'# Distancia [angstrom]    |   Energia [meV]', end='\n', file=f)
+            print(f'# -----------------------------------------', end='\n', file=f)
+            print(f'# Dist    Eint CCSD-NOCP    Eint CCSD-CP', end='\n', file=f)
+            print(f'# -----------------------------------------', end='\n', file=f)
+            for d, e1, e2 in zip(dist, np.around(eint1, 6), np.around(eint2, 6)):
+                print(f'{d:6.2f} {e1:16.9f} {e2:17.9f}', end='\n', file=f)
+    if metodo == 'mp2':
+        with open(nome, 'w') as f:
+            print(f'# Distancia [angstrom]    |   Energia [meV]', end='\n', file=f)
+            print(f'# -----------------------------------------', end='\n', file=f)
+            print(f'# Dist    Eint MP2-NOCP    Eint MP2-CP', end='\n', file=f)
+            print(f'# -----------------------------------------', end='\n', file=f)
+            for d, e1, e2 in zip(dist, np.around(eint1, 6), np.around(eint2, 6)):
+                print(f'{d:6.2f} {e1:16.9f} {e2:17.9f}', end='\n', file=f)
+    if metodo == 'mp4':
+        with open(nome, 'w') as f:
+            print(f'# Distancia [angstrom]    |   Energia [meV]', end='\n', file=f)
+            print(f'# -----------------------------------------', end='\n', file=f)
+            print(f'# Dist    Eint MP4-NOCP    Eint MP4-CP', end='\n', file=f)
+            print(f'# -----------------------------------------', end='\n', file=f)
+            for d, e1, e2 in zip(dist, np.around(eint1, 6), np.around(eint2, 6)):
+                print(f'{d:6.2f} {e1:16.9f} {e2:15.9f}', end='\n', file=f)
 
 
 def move_arquivo(nome, gas, metodo, base):
     subprocess.run(['mv', nome, f'{gas}_{metodo}_{base}'])
 
+
 geometrias_amonia = glob('*_sapt.xyz')
 #print(geometrias_amonia)
 
-metodos = ['ccsd(t)', 'mp4']
-#bases = ['jun-cc-pvdz', 'aug-cc-pvdz', 'aug-cc-pvtz', 'aug-cc-pvqz']
-bases = ['jun-cc-pvdz','6-31g']
+metodos = ['ccsd', 'ccsd(t)', 'mp2', 'mp4']
+bases = ['jun-cc-pvdz']
 #gases_nobres = ['He', 'Ne', 'Ar', 'Kr']
-gases_nobres = ['He', 'Ne']
+gases_nobres = ['He',]
 
 for gas_nobre in gases_nobres:
     for metodo in metodos:
         for base in bases:
             cria_diretorio(gas_nobre, metodo, base)
+            nivel = f'{metodo}/{base}'
             for geo in geometrias_amonia:
                 with open(geo, 'r') as f:
                     str_geo = f.read()
@@ -115,35 +132,25 @@ for gas_nobre in gases_nobres:
 
                 eccsd = cria_matriz(distancias)
                 eccsdt = cria_matriz(distancias)
-                emp2 = cria_matriz(distancias)
-                emp4 = cria_matriz(distancias)
 
-                eccsd_sem_cp = np.zeros((len(distancias)))
-                eccsd_cp = np.zeros((len(distancias)))
-                emp2_sem_cp = np.zeros((len(distancias)))
-                emp2_cp = np.zeros((len(distancias)))
-                eccsdt_sem_cp = np.zeros((len(distancias)))
-                eccsdt_cp = np.zeros((len(distancias)))
-                emp4_sem_cp = np.zeros((len(distancias)))
-                emp4_cp = np.zeros((len(distancias)))
+                en_sem_cp =  np.zeros((len(distancias)))
+                en_com_cp = np.zeros((len(distancias)))
 
                 for i, dist in enumerate(distancias):
                     # Construindo a geometria do Dimero
                     dimero = input_geo(str_geo, gas_nobre, distancias, i)
+                    '''
+                    #Essa é uma forma de expressar a energia do dimero considerando
+                    #átomos fantasmas. É uma maneira ineficiente dado as formas
+                    #internas que o PSI4 pode fazer.
                     # constroi a molecula
                     psi4.geometry(dimero)
-                    #define nivel de cálculo
-                    nivel = f'{metodo}/{base}'
                     # calcula a energia
                     psi4.energy(nivel)
-                    # adiona as energias decompostas em suas respectivas listas
+                    # adiona as energias em suas respectivas matrizes
                     # As energias sao convertidas de Hartree para meV.
-                    if metodo == 'ccsd(t)':
-                        eccsd[i, 0] = psi4.variable('CCSD TOTAL ENERGY') * 27211.4
-                        eccsdt[i, 0] = psi4.variable('CCSD(T) TOTAL ENERGY') * 27211.4
-                    else:
-                        emp2[i, 0] = psi4.variable('MP2 TOTAL ENERGY') * 27211.4
-                        emp4[i, 0] = psi4.variable('MP4 TOTAL ENERGY') * 27211.4
+                    eccsd[i, 0] = psi4.variable('CCSD TOTAL ENERGY') * 27211.4
+                    eccsdt[i, 0] = psi4.variable('CCSD(T) TOTAL ENERGY') * 27211.4
                     psi4.core.clean()
 
                     # Construindo a geometria do monomeroA
@@ -152,46 +159,53 @@ for gas_nobre in gases_nobres:
                     psi4.geometry(monomeroA)
                     # calcula a energia
                     psi4.energy(nivel)
-                    if metodo == 'ccsd(t)':
-                        eccsd[i, 1] = psi4.variable('CCSD TOTAL ENERGY') * 27211.4
-                        eccsdt[i, 1] = psi4.variable('CCSD(T) TOTAL ENERGY') * 27211.4
-                    else:
-                        emp2[i, 1] = psi4.variable('MP2 TOTAL ENERGY') * 27211.4
-                        emp4[i, 1] = psi4.variable('MP4 TOTAL ENERGY') * 27211.4
+                    eccsd[i, 1] = psi4.variable('CCSD TOTAL ENERGY') * 27211.4
+                    eccsdt[i, 1] = psi4.variable('CCSD(T) TOTAL ENERGY') * 27211.4
                     psi4.core.clean()
 
                     # Construindo a geometria do monomeroB
-                    new_str_geo = re.sub(r'[a-zA-Z]', casando('Gh'), str_geo,
+                    Gh_str_geo = re.sub(r'[a-zA-Z]', casando('Gh'), str_geo,
                                          flags=re.IGNORECASE)
-                    monomeroB = input_geo(new_str_geo, gas_nobre, distancias, i)
+                    monomeroB = input_geo(Gh_str_geo, gas_nobre, distancias, i)
                     #constroi a molecula
                     psi4.geometry(monomeroB)
                     # calcula a energia
                     psi4.energy(nivel)
-                    if metodo == 'ccsd(t)':
-                        eccsd[i, 2] = psi4.variable('CCSD TOTAL ENERGY') * 27211.4
-                        eccsdt[i, 2] = psi4.variable('CCSD(T) TOTAL ENERGY') * 27211.4
-                    else:
-                        emp2[i, 2] = psi4.variable('MP2 TOTAL ENERGY') * 27211.4
-                        emp4[i, 2] = psi4.variable('MP4 TOTAL ENERGY') * 27211.4
+                    eccsd[i, 2] = psi4.variable('CCSD TOTAL ENERGY') * 27211.4
+                    eccsdt[i, 2] = psi4.variable('CCSD(T) TOTAL ENERGY') * 27211.4
                     psi4.core.clean()
-
-                    #bsse_type=['nocp', 'cp', 'vmfc']
-
-                    #Calcula energia com Conuterpoise
+                    Eint_ccsd = Eint(eccsd)
+                    Eint_ccsdt = Eint(eccsdt)
+                    '''
                     if metodo == 'ccsd(t)':
-                        Eint_ccsd = Eint(eccsd)
-                        Eint_ccsdt = Eint(eccsdt)
-                    else:
-                        Eint_mp2 = Eint(emp2)
-                        Eint_mp4 = Eint(emp4)
+                        psi4.geometry(dimero)
+                        psi4.energy(nivel, bsse_type=['nocp', 'cp',])
+                        en_sem_cp[i] = psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
+                        en_com_cp[i] = psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
+                        psi4.core.clean()
+                    if metodo == 'ccsd':
+                        psi4.geometry(dimero)
+                        psi4.energy(nivel, bsse_type=['nocp', 'cp',])
+                        en_sem_cp[i] = psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
+                        en_com_cp[i] = psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
+                        psi4.core.clean()
+                    if metodo == 'mp2':
+                        psi4.geometry(dimero)
+                        psi4.energy(nivel, bsse_type=['nocp', 'cp',])
+                        en_sem_cp[i] = psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
+                        en_com_cp[i] = psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
+                        psi4.core.clean()
+                    if metodo == 'mp4':
+                        psi4.geometry(dimero)
+                        psi4.energy(nivel, bsse_type=['nocp', 'cp',])
+                        en_sem_cp[i] = psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
+                        en_com_cp[i] = psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
+                        psi4.core.clean()
+
+
 
                 sitio_inte = geo.replace('sapt.xyz', '').replace('amonia', '')
                 nome_arq_out = metodo +  sitio_inte + base + '.dat'
 
-                if metodo == 'ccsd(t)':
-                    cria_arquivo(metodo, nome_arq_out, distancias, Eint_ccsd, Eint_ccsdt,)
-                    move_arquivo(nome_arq_out, gas_nobre, metodo, base)
-                else:
-                    cria_arquivo(metodo, nome_arq_out, distancias, Eint_mp2, Eint_mp4,)
-                    move_arquivo(nome_arq_out, gas_nobre, metodo, base)
+                cria_arquivo(nome_arq_out, metodo, distancias, en_sem_cp, en_com_cp)
+                move_arquivo(nome_arq_out, gas_nobre, metodo, base)
