@@ -1,5 +1,4 @@
 from glob import glob
-
 import numpy as np
 import psi4
 import re
@@ -72,7 +71,7 @@ def Eint(matriz):
 
     return Eint
 
-def cria_arquivo(nome, metodo, dist, eint1, eint2):
+def cria_arquivo(nome, metodo, dist, eint1, eint2, eint3, eint4, eint5, eint6, eint7):
     if metodo == 'ccsd(t)':
         with open(nome, 'w') as f:
             print(f'# Distancia [angstrom]    |   Energia [meV]', end='\n', file=f)
@@ -81,6 +80,7 @@ def cria_arquivo(nome, metodo, dist, eint1, eint2):
             print(f'# -----------------------------------------', end='\n', file=f)
             for d, e1, e2 in zip(dist, np.around(eint1, 6), np.around(eint2, 6)):
                 print(f'{d:5.2f} {e1:16.9f} {e2:17.9f}', end='\n', file=f)
+                
     if metodo == 'ccsd':
         with open(nome, 'w') as f:
             print(f'# Distancia [angstrom]    |   Energia [meV]', end='\n', file=f)
@@ -89,6 +89,7 @@ def cria_arquivo(nome, metodo, dist, eint1, eint2):
             print(f'# -----------------------------------------', end='\n', file=f)
             for d, e1, e2 in zip(dist, np.around(eint1, 6), np.around(eint2, 6)):
                 print(f'{d:6.2f} {e1:16.9f} {e2:17.9f}', end='\n', file=f)
+
     if metodo == 'mp2':
         with open(nome, 'w') as f:
             print(f'# Distancia [angstrom]    |   Energia [meV]', end='\n', file=f)
@@ -97,6 +98,7 @@ def cria_arquivo(nome, metodo, dist, eint1, eint2):
             print(f'# -----------------------------------------', end='\n', file=f)
             for d, e1, e2 in zip(dist, np.around(eint1, 6), np.around(eint2, 6)):
                 print(f'{d:6.2f} {e1:16.9f} {e2:17.9f}', end='\n', file=f)
+
     if metodo == 'mp4':
         with open(nome, 'w') as f:
             print(f'# Distancia [angstrom]    |   Energia [meV]', end='\n', file=f)
@@ -106,6 +108,17 @@ def cria_arquivo(nome, metodo, dist, eint1, eint2):
             for d, e1, e2 in zip(dist, np.around(eint1, 6), np.around(eint2, 6)):
                 print(f'{d:6.2f} {e1:16.9f} {e2:15.9f}', end='\n', file=f)
 
+    metodos_perturbativos = ('sapt0', 'sapt2', 'sapt2+', 'sapt2+(3)', 'sapt2+3')
+    if metodo in metodos_perturbativos:
+        with open(nome_arq_out, 'w') as f:
+            print(f'#                        Distancia [angstrom]    |   Energia [meV]', end='\n', file=f)
+            print(f'# ---------------------------------------------------------------------------------------------------------------', end='\n', file=f)
+            print(f'# Dist    Energia Eletrostatica       Energia Inducao        Energia Dispercao      Energia EXCH     Energia Sapt', end='\n', file=f)
+            print(f'# ---------------------------------------------------------------------------------------------------------------', end='\n', file=f)
+            for d, el, ei, ed, eex, es in zip(dist, np.around(eint3, 7), np.around(eint4, 7),
+                                              np.around(eint5, 7), np.around(eint6, 7), np.around(eint7, 7)):
+                print(f'{d:6.2f}  {el:16.9f}   {ei:25.9f}   {ed:20.9f}   {eex:18.9f}   {es:13.9f}', end='\n', file=f)
+
 
 def move_arquivo(nome, gas, metodo, base):
     subprocess.run(['mv', nome, f'{gas}_{metodo}_{base}'])
@@ -114,7 +127,9 @@ def move_arquivo(nome, gas, metodo, base):
 geometrias_amonia = glob('*_sapt.xyz')
 #print(geometrias_amonia)
 
-metodos = ['ccsd', 'ccsd(t)', 'mp2', 'mp4']
+metodos = ['ccsd', 'ccsd(t)', 'mp2', 'mp4', 'sapt0',
+           'sapt2', 'sapt2+', 'sapt2+(3)', 'sapt2+3']
+
 bases = ['jun-cc-pvdz']
 #gases_nobres = ['He', 'Ne', 'Ar', 'Kr']
 gases_nobres = ['He',]
@@ -135,6 +150,12 @@ for gas_nobre in gases_nobres:
 
                 en_sem_cp =  np.zeros((len(distancias)))
                 en_com_cp = np.zeros((len(distancias)))
+
+                eelst = np.zeros((len(distancias)))
+                eind = np.zeros((len(distancias)))
+                edisp = np.zeros((len(distancias)))
+                eexch = np.zeros((len(distancias)))
+                esapt = np.zeros((len(distancias)))
 
                 for i, dist in enumerate(distancias):
                     # Construindo a geometria do Dimero
@@ -201,11 +222,57 @@ for gas_nobre in gases_nobres:
                         en_sem_cp[i] = psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
                         en_com_cp[i] = psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
                         psi4.core.clean()
+                    if metodo == 'sapt0':
+                        psi4.geometry(dimero)
+                        psi4.energy(nivel)
+                        eelst[i] = psi4.variable('SAPT ELST ENERGY') * 27211.4
+                        eind[i] = psi4.variable('SAPT IND ENERGY') * 27211.4
+                        edisp[i] = psi4.variable('SAPT DISP ENERGY') * 27211.4
+                        eexch[i] = psi4.variable('SAPT EXCH ENERGY') * 27211.4
+                        esapt[i] = psi4.variable('SAPT TOTAL ENERGY') * 27211.4
+                        psi4.core.clean()
+                    if metodo == 'sapt2':
+                        psi4.geometry(dimero)
+                        psi4.energy(nivel)
+                        eelst[i] = psi4.variable('SAPT ELST ENERGY') * 27211.4
+                        eind[i] = psi4.variable('SAPT IND ENERGY') * 27211.4
+                        edisp[i] = psi4.variable('SAPT DISP ENERGY') * 27211.4
+                        eexch[i] = psi4.variable('SAPT EXCH ENERGY') * 27211.4
+                        esapt[i] = psi4.variable('SAPT TOTAL ENERGY') * 27211.4
+                        psi4.core.clean()
+                    if metodo == 'sapt2+':
+                        psi4.geometry(dimero)
+                        psi4.energy(nivel)
+                        eelst[i] = psi4.variable('SAPT ELST ENERGY') * 27211.4
+                        eind[i] = psi4.variable('SAPT IND ENERGY') * 27211.4
+                        edisp[i] = psi4.variable('SAPT DISP ENERGY') * 27211.4
+                        eexch[i] = psi4.variable('SAPT EXCH ENERGY') * 27211.4
+                        esapt[i] = psi4.variable('SAPT TOTAL ENERGY') * 27211.4
+                        psi4.core.clean()
+                    if metodo == 'sapt2+(3)':
+                        psi4.geometry(dimero)
+                        psi4.energy(nivel)
+                        eelst[i] = psi4.variable('SAPT ELST ENERGY') * 27211.4
+                        eind[i] = psi4.variable('SAPT IND ENERGY') * 27211.4
+                        edisp[i] = psi4.variable('SAPT DISP ENERGY') * 27211.4
+                        eexch[i] = psi4.variable('SAPT EXCH ENERGY') * 27211.4
+                        esapt[i] = psi4.variable('SAPT TOTAL ENERGY') * 27211.4
+                        psi4.core.clean()
+                    if metodo == 'sapt2+3':
+                        psi4.geometry(dimero)
+                        psi4.energy(nivel)
+                        eelst[i] = psi4.variable('SAPT ELST ENERGY') * 27211.4
+                        eind[i] = psi4.variable('SAPT IND ENERGY') * 27211.4
+                        edisp[i] = psi4.variable('SAPT DISP ENERGY') * 27211.4
+                        eexch[i] = psi4.variable('SAPT EXCH ENERGY') * 27211.4
+                        esapt[i] = psi4.variable('SAPT TOTAL ENERGY') * 27211.4
+                        psi4.core.clean()
 
 
 
                 sitio_inte = geo.replace('sapt.xyz', '').replace('amonia', '')
                 nome_arq_out = metodo +  sitio_inte + base + '.dat'
 
-                cria_arquivo(nome_arq_out, metodo, distancias, en_sem_cp, en_com_cp)
+                cria_arquivo(nome_arq_out, metodo, distancias, en_sem_cp, en_com_cp,
+                             eelst, eind, edisp, eexch, esapt)
                 move_arquivo(nome_arq_out, gas_nobre, metodo, base)
