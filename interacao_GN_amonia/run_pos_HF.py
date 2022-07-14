@@ -3,13 +3,14 @@ import numpy as np
 import psi4
 import re
 import subprocess
+import time
 
 
-psi4.set_memory('10 GB')
+psi4.set_memory('20 GB')
 print('\n')
 psi4.core.set_output_file('output.dat', False)
 
-numpy_memory = 10
+numpy_memory = 20
 
 def cria_diretorio(gas, metodo, base):
     '''
@@ -80,7 +81,7 @@ def cria_arquivo(nome, metodo, dist, eint1, eint2, eint3, eint4, eint5, eint6, e
             print(f'# -----------------------------------------', end='\n', file=f)
             for d, e1, e2 in zip(dist, np.around(eint1, 6), np.around(eint2, 6)):
                 print(f'{d:5.2f} {e1:16.9f} {e2:17.9f}', end='\n', file=f)
-                
+
     if metodo == 'ccsd':
         with open(nome, 'w') as f:
             print(f'# Distancia [angstrom]    |   Energia [meV]', end='\n', file=f)
@@ -108,6 +109,15 @@ def cria_arquivo(nome, metodo, dist, eint1, eint2, eint3, eint4, eint5, eint6, e
             for d, e1, e2 in zip(dist, np.around(eint1, 6), np.around(eint2, 6)):
                 print(f'{d:6.2f} {e1:16.9f} {e2:15.9f}', end='\n', file=f)
 
+    if metodo == 'sherrill_gold_standard':
+        with open(nome, 'w') as f:
+            print(f'# Distancia [angstrom]    |   Energia [meV]', end='\n', file=f)
+            print(f'# -----------------------------------------', end='\n', file=f)
+            print(f'# Dist    Eint SGS-NOCP    Eint SGS-CP', end='\n', file=f)
+            print(f'# -----------------------------------------', end='\n', file=f)
+            for d, e1, e2 in zip(dist, np.around(eint1, 6), np.around(eint2, 6)):
+                print(f'{d:6.2f} {e1:16.9f} {e2:15.9f}', end='\n', file=f)
+
     metodos_perturbativos = ('sapt0', 'sapt2', 'sapt2+', 'sapt2+(3)', 'sapt2+3')
     if metodo in metodos_perturbativos:
         with open(nome_arq_out, 'w') as f:
@@ -127,23 +137,29 @@ def move_arquivo(nome, gas, metodo, base):
 geometrias_amonia = glob('*_sapt.xyz')
 #print(geometrias_amonia)
 
-metodos = ['ccsd', 'ccsd(t)', 'mp2', 'mp4', 'sapt0',
-           'sapt2', 'sapt2+', 'sapt2+(3)', 'sapt2+3']
+metodos = ['ccsd', 'ccsd(t)', 'mp2', 'mp4', 'sapt0','sapt2', 'sapt2+',
+           'sapt2+(3)', 'sapt2+3', 'sherrill_gold_standard']
 
 bases = ['jun-cc-pvdz']
 #gases_nobres = ['He', 'Ne', 'Ar', 'Kr']
 gases_nobres = ['He',]
 
+ini = time.time()
+
 for gas_nobre in gases_nobres:
     for metodo in metodos:
         for base in bases:
-            cria_diretorio(gas_nobre, metodo, base)
+            if metodo != 'sherrill_gold_standard':
+                cria_diretorio(gas_nobre, metodo, base)
+            else:
+                cria_diretorio(gas_nobre, metodo, base='')
+
             nivel = f'{metodo}/{base}'
             for geo in geometrias_amonia:
                 with open(geo, 'r') as f:
                     str_geo = f.read()
 
-                distancias = np.arange(3.5, 4.1, 0.5)
+                distancias = np.arange(3.5, 5.6, 0.5)
 
                 eccsd = cria_matriz(distancias)
                 eccsdt = cria_matriz(distancias)
@@ -198,6 +214,7 @@ for gas_nobre in gases_nobres:
                     Eint_ccsd = Eint(eccsd)
                     Eint_ccsdt = Eint(eccsdt)
                     '''
+
                     if metodo == 'ccsd(t)':
                         psi4.geometry(dimero)
                         psi4.energy(nivel, bsse_type=['nocp', 'cp',])
@@ -268,11 +285,24 @@ for gas_nobre in gases_nobres:
                         esapt[i] = psi4.variable('SAPT TOTAL ENERGY') * 27211.4
                         psi4.core.clean()
 
+                    if metodo == 'sherrill_gold_standard':
+                        psi4.geometry(dimero)
+                        psi4.energy(metodo, bsse_type=['nocp', 'cp',])
+                        en_sem_cp[i] = psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
+                        en_com_cp[i] = psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
+                        psi4.core.clean()
 
-
-                sitio_inte = geo.replace('sapt.xyz', '').replace('amonia', '')
-                nome_arq_out = metodo +  sitio_inte + base + '.dat'
-
-                cria_arquivo(nome_arq_out, metodo, distancias, en_sem_cp, en_com_cp,
-                             eelst, eind, edisp, eexch, esapt)
-                move_arquivo(nome_arq_out, gas_nobre, metodo, base)
+                if metodo != 'sherrill_gold_standard':
+                    sitio_inte = geo.replace('sapt.xyz', '').replace('amonia', '')
+                    nome_arq_out = metodo +  sitio_inte + base + '.dat'
+                    cria_arquivo(nome_arq_out, metodo, distancias, en_sem_cp, en_com_cp,
+                                 eelst, eind, edisp, eexch, esapt)
+                    move_arquivo(nome_arq_out, gas_nobre, metodo, base)
+                else:
+                    sitio_inte = geo.replace('sapt.xyz', '').replace('amonia', '')
+                    nome_arq_out = metodo +  sitio_inte + '.dat'
+                    cria_arquivo(nome_arq_out, metodo, distancias, en_sem_cp, en_com_cp,
+                                 eelst, eind, edisp, eexch, esapt)
+                    move_arquivo(nome_arq_out, gas_nobre, metodo, base='')
+fim = time.time() - ini
+print(fim)
