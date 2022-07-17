@@ -6,7 +6,8 @@ import subprocess
 import time
 
 
-#psi4.set_memory('20 GB')
+psi4.set_memory('20 GB')
+psi4.set_num_threads(12)
 #print('\n')
 psi4.core.set_output_file('output.dat', False)
 psi4.set_options({'freeze_core': 'true'})
