@@ -13,14 +13,18 @@ psi4.set_options({'freeze_core': 'true'})
 
 #numpy_memory = 20
 
-def cria_diretorio(gas, metodo, base):
+def cria_diretorio(gas, metodo='sem_metodo', base='sem_base'):
     '''
     Essa função recebe três strings que correspondem ao gás nobre de interesse
     o método e a base que iremos executar os cálculos e cria um novo diretorio
     com as respectivas palavras.
     '''
-    subprocess.run(['mkdir', f'{gas}_{metodo}_{base}'])
-
+    if base == 'sem_base' and metodo == 'sem_metodo':
+        subprocess.run(['mkdir', f'{gas}'])
+    else:
+        subprocess.run(['mkdir', f'{gas}_{metodo}_{base}'])
+        
+        
 def cria_matriz(d):
     '''
     Essa função recebe as distâncias em angstrom que correspondem ao
@@ -138,19 +142,24 @@ def cria_arquivo(nome, metodo, dist, eint1, eint2, eint3, eint4, eint5, eint6, e
 def move_arquivo(nome, gas, metodo, base):
     subprocess.run(['mv', nome, f'{gas}_{metodo}_{base}'])
 
-# ------------------------------------------------------------------------------
-#  Iniciamos a execução deste script considerando as geometrias que correspondem
-#  a molécula de amônia. Essas geometrias estão no diretorio corrente e foram
-#  orientadas segundo o sítio de interação de interesse.
+
+def move_diretorio(gas, metodo, base):
+    subprocess.run(['mv',  f'{gas}_{metodo}_{base}', f'{gas}/'])    
+
+# ---------------------------------------------------------------------
+#  Iniciamos a execução deste script considerando as geometrias que 
+#  correspondem a molécula de amônia. Essas geometrias estão no 
+#  diretorio corrente e foram orientadas segundo o sítio de interação 
+#  de interesse.
 #
-#  Todos os métodos foram estabelecidos da lista metodos bem como as bases e os
-#  gases que desejamos interagir em suas respectivas listas.
+#  Todos os métodos foram estabelecidos da lista metodos bem como as 
+#  bases e os gases que desejamos interagir em suas respectivas listas.
 #
-#  ------------------------------------------------------------------------------
+#  --------------------------------------------------------------------
 #
 #  Início Aqui! :)
 #
-#  ------------------------------------------------------------------------------
+#  --------------------------------------------------------------------
 
 geometrias_amonia = glob('*_sapt.xyz')
 #print(geometrias_amonia)
@@ -162,6 +171,7 @@ bases = ['jun-cc-pvdz', 'aug-cc-pvdz', 'aug-cc-pvtz', 'aug-cc-pvqz']
 gases_nobres = ['He', 'Ne', 'Ar', 'Kr']
 
 for gas_nobre in gases_nobres:
+    cria_diretorio(gas_nobre)
     for metodo in metodos:
         for base in bases:
             if metodo != 'sherrill_gold_standard':
@@ -319,3 +329,4 @@ for gas_nobre in gases_nobres:
                     cria_arquivo(nome_arq_out, metodo, distancias, en_sem_cp, en_com_cp,
                                  eelst, eind, edisp, eexch, esapt)
                     move_arquivo(nome_arq_out, gas_nobre, metodo, base='')
+            move_diretorio(gas_nobre, metodo, base)        
