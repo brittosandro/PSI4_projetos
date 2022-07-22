@@ -5,11 +5,6 @@ import subprocess
 import time
 
 
-def grac(ecat, eneu, ehomo):
-    EI = ecat - eneu
-    return EI - ehomo
-
-
 def input_geo(geo, gas, d, i):
     '''
     Como parâmetros de entrada a função recebe a geometria do composto (geo)
@@ -22,6 +17,8 @@ def input_geo(geo, gas, d, i):
     0 1 """ + """\n""" + gas + """  """ + str(d[i]) + """  0.000000   0.00000000
     units angstrom
     symmetry c1
+    no_com
+    no_reorient
     """
     return input
 
@@ -57,11 +54,16 @@ def move_arquivo(nome, gas, funcional, base):
 def move_diretorio(gas, funcional, base):
     subprocess.run(['mv',  f'{gas}_{funcional}_{base}', f'{gas}/'])
 
+
+def grac(ecat, eneu, ehomo):
+    EI = ecat - eneu
+    return EI - ehomo
+
+
 def calcula_CRAC(funcional, base, molecula):
 
     psi4.set_options({'freeze_core': 'true',
                       'basis': base,
-                      'SAPT_DFT_FUNCTIONAL': funcional,
                       'reference': 'uhf',
                       })
     #geometrias para os calculos
@@ -78,23 +80,30 @@ def calcula_CRAC(funcional, base, molecula):
 
     psi4.core.set_output_file('output_neutro.dat', False)
     geo_neutro = psi4.geometry(geo_neutro)
-    en_neutro, wfn_neutro = psi4.energy('pbe0', molecule=geo_neutro, return_wfn=True)
+    en_neutro, wfn_neutro = psi4.energy(funcional, molecule=geo_neutro, return_wfn=True)
     HOMO = wfn_neutro.epsilon_a_subset("AO", "ALL").np[wfn_neutro.nalpha()-1]
     #LUMO = wfn_neutro.epsilon_a_subset("AO", "ALL").np[wfn_neutro.nalpha()]
+
     print('\n')
+
     #print(f'HOMO = {HOMO}')
     #print(f'LUMO = {LUMO}')
     en_neu = psi4.variable('DFT TOTAL ENERGY')
     print(f'Energia Neutro: {en_neu}')
     psi4.core.clean()
+
     psi4.core.set_output_file('output_cation.dat', False)
     geo_cation = psi4.geometry(geo_cation)
-    en_cation = psi4.energy('pbe0', molecule=geo_cation)
+    en_cation = psi4.energy(funcional, molecule=geo_cation)
     en_cat = psi4.variable('DFT TOTAL ENERGY')
     print(f'Energia Cation: {en_cat}')
     psi4.core.clean()
+
     g = grac(en_cat, en_neu, HOMO)
+
+    print(f'Funcional = {funcional}')
     print(f'\nGRAC = {g} para Base {base}')
+
     return g
 
 
@@ -104,8 +113,9 @@ def calcula_CRAC(funcional, base, molecula):
 #psi4.set_options({'freeze_core': 'true'})
 
 geometrias_amonia = glob('*_sapt.xyz')
-funcionais = ['pbe0']
-bases = ['jun-cc-pvdz', '6-31g(d)']
+#funcionais = ['b3lyp', 'X3LYP', 'cam-b3lyp', 'pbe0', 'WB97X-D', 'WB97X-D3', 'B3LYP-D3MBJ', 'WB97X-D3BJ', 'CAM-B3LYP-D3BJ', 'PBE0-D3BJ',]
+funcionais = ['WB97X-D', ]
+bases = ['aug-cc-pvtz']
 gases_nobres = ['He']
 
 psi4.core.set_output_file('output.dat', False)
@@ -121,7 +131,7 @@ for gas_nobre in gases_nobres:
                 grac_a = calcula_CRAC(funcional, base, str_geo)
                 grac_b = calcula_CRAC(funcional, base, gas_nobre)
 
-                distancias = np.arange(3.5, 4.1, 0.5)
+                distancias = np.arange(2.8, 6.6, 0.2)
                 eelst = np.zeros((len(distancias)))
                 eind = np.zeros((len(distancias)))
                 edisp = np.zeros((len(distancias)))
@@ -132,6 +142,10 @@ for gas_nobre in gases_nobres:
                     psi4.set_options({'freeze_core': 'true',
                                       'reference': 'rhf',
                                       'basis': base,
+                                      'scf_type': 'df',
+                                      #'maxiter': 10000,
+                                      #'D_CONVERGENCE': 1e-6,
+                                      #'E_CONVERGENCE': 1e-6,
                                       'SAPT_DFT_FUNCTIONAL': funcional,
                                       'sapt_dft_grac_shift_a': grac_a,
                                       'sapt_dft_grac_shift_b': grac_b})
