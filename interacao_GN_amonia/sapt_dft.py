@@ -57,15 +57,11 @@ def move_diretorio(gas, funcional, base):
 
 def grac(ecat, eneu, ehomo):
     EI = ecat - eneu
-    return EI - ehomo
+    return EI + ehomo
 
 
 def calcula_CRAC(funcional, base, molecula):
 
-    psi4.set_options({'freeze_core': 'true',
-                      'basis': base,
-                      'reference': 'uhf',
-                      })
     #geometrias para os calculos
     geo_neutro = """
         0 1 """ + """\n""" + molecula + """
@@ -79,6 +75,10 @@ def calcula_CRAC(funcional, base, molecula):
         """
 
     psi4.core.set_output_file('output_neutro.dat', False)
+    psi4.set_options({'freeze_core': 'true',
+                      'basis': base,
+                      'reference': 'uhf',
+                      })
     geo_neutro = psi4.geometry(geo_neutro)
     en_neutro, wfn_neutro = psi4.energy(funcional, molecule=geo_neutro, return_wfn=True)
     HOMO = wfn_neutro.epsilon_a_subset("AO", "ALL").np[wfn_neutro.nalpha()-1]
@@ -93,6 +93,10 @@ def calcula_CRAC(funcional, base, molecula):
     psi4.core.clean()
 
     psi4.core.set_output_file('output_cation.dat', False)
+    psi4.set_options({'freeze_core': 'true',
+                      'basis': base,
+                      'reference': 'uhf',
+                      })
     geo_cation = psi4.geometry(geo_cation)
     en_cation = psi4.energy(funcional, molecule=geo_cation)
     en_cat = psi4.variable('DFT TOTAL ENERGY')
@@ -107,16 +111,21 @@ def calcula_CRAC(funcional, base, molecula):
     return g
 
 
-#psi4.set_memory('3 GB')
-#psi4.set_num_threads(2)
-#psi4.core.set_output_file('output.dat', False)
-#psi4.set_options({'freeze_core': 'true'})
+psi4.set_memory('20 GB')
+psi4.set_num_threads(12)
+numpy_memory = 20
 
 geometrias_amonia = glob('*_sapt.xyz')
 #funcionais = ['b3lyp', 'X3LYP', 'cam-b3lyp', 'pbe0', 'WB97X-D', 'WB97X-D3', 'B3LYP-D3MBJ', 'WB97X-D3BJ', 'CAM-B3LYP-D3BJ', 'PBE0-D3BJ',]
-funcionais = ['WB97X-D', ]
+#funcionais = ['b3lyp', 'X3LYP', 'cam-b3lyp', 'WB97X-D', 'WB97X-D3', 'PBE0-D3BJ']
+funcionais = ['PBE0']
+#bases = ['aug-cc-pvdz', 'aug-cc-pvtz', 'aug-cc-pvqz']
+#bases = ['jun-cc-pvdz', 'jun-cc-pvtz', 'jun-cc-pvqz']
+#bases = ['def2-TZVPD', 'def2-TZVPPD', 'def2-QZVPPD',]
 bases = ['aug-cc-pvtz']
 gases_nobres = ['He']
+
+grac_he_exp = -0.01405
 
 psi4.core.set_output_file('output.dat', False)
 for gas_nobre in gases_nobres:
@@ -131,7 +140,7 @@ for gas_nobre in gases_nobres:
                 grac_a = calcula_CRAC(funcional, base, str_geo)
                 grac_b = calcula_CRAC(funcional, base, gas_nobre)
 
-                distancias = np.arange(2.8, 6.6, 0.2)
+                distancias = np.arange(3.3, 7.1, 0.2)
                 eelst = np.zeros((len(distancias)))
                 eind = np.zeros((len(distancias)))
                 edisp = np.zeros((len(distancias)))
@@ -139,31 +148,35 @@ for gas_nobre in gases_nobres:
                 esapt = np.zeros((len(distancias)))
 
                 for i, dist in enumerate(distancias):
-                    psi4.set_options({'freeze_core': 'true',
-                                      'reference': 'rhf',
-                                      'basis': base,
-                                      'scf_type': 'df',
-                                      #'maxiter': 10000,
-                                      #'D_CONVERGENCE': 1e-6,
-                                      #'E_CONVERGENCE': 1e-6,
-                                      'SAPT_DFT_FUNCTIONAL': funcional,
-                                      'sapt_dft_grac_shift_a': grac_a,
-                                      'sapt_dft_grac_shift_b': grac_b})
+                    try:
+                        psi4.set_options({'freeze_core': 'true',
+                                          'reference': 'rhf',
+                                          'basis': base,
+                                           #'scf_type': 'df',
+                                           #'maxiter': 10000,
+                                          #'D_CONVERGENCE': 1e-8,
+                                          #'E_CONVERGENCE': 1e-8,
+                                          'SAPT_DFT_FUNCTIONAL': funcional,
+                                          'sapt_dft_grac_shift_a': grac_a,
+                                          'sapt_dft_grac_shift_b': grac_b,
+                                          })
 
-                    dimero = input_geo(str_geo, gas_nobre, distancias, i)
-                    psi4.geometry(dimero)
-                    psi4.energy('sapt(dft)')
-                    eelst[i] = psi4.variable('SAPT ELST ENERGY') * 27211.4
-                    eind[i] = psi4.variable('SAPT IND ENERGY') * 27211.4
-                    edisp[i] = psi4.variable('SAPT DISP ENERGY') * 27211.4
-                    eexch[i] = psi4.variable('SAPT EXCH ENERGY') * 27211.4
-                    esapt[i] = psi4.variable('SAPT TOTAL ENERGY') * 27211.4
-                    psi4.core.clean()
-                    #time.sleep(5)
-                    sitio_inte = geo.replace('sapt.xyz', '').replace('amonia', '')
-                    nome_arq_out = funcional +  sitio_inte + base + '.dat'
+                        dimero = input_geo(str_geo, gas_nobre, distancias, i)
+                        psi4.geometry(dimero)
+                        psi4.energy('sapt(dft)')
+                        eelst[i] = psi4.variable('SAPT ELST ENERGY') * 27211.4
+                        eind[i] = psi4.variable('SAPT IND ENERGY') * 27211.4
+                        edisp[i] = psi4.variable('SAPT DISP ENERGY') * 27211.4
+                        eexch[i] = psi4.variable('SAPT EXCH ENERGY') * 27211.4
+                        esapt[i] = psi4.variable('SAPT TOTAL ENERGY') * 27211.4
+                        psi4.core.clean()
+                        #time.sleep(5)
+                        sitio_inte = geo.replace('sapt.xyz', '').replace('amonia', '')
+                        nome_arq_out = funcional +  sitio_inte + base + '.dat'
 
-                    cria_arquivo(nome_arq_out, funcional, distancias, eelst, eind,
-                                 edisp, eexch, esapt)
-                    move_arquivo(nome_arq_out, gas_nobre, funcional, base)
+                        cria_arquivo(nome_arq_out, funcional, distancias, eelst, eind,
+                                     edisp, eexch, esapt)
+                        move_arquivo(nome_arq_out, gas_nobre, funcional, base)
+                    except:
+                        continue
             move_diretorio(gas_nobre, funcional, base)
