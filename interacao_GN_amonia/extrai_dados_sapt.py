@@ -80,93 +80,96 @@ sitio3_mol4 = {}
 
 diretorio_corrente = '.'
 for dir, subdirs, arqs in os.walk(diretorio_corrente):
-    for arq in arqs:
-        if sitio1 in caminho(dir, arq):
-            if molecula1 in caminho(dir, arq):
-                metodo_base = pega_metodo_base(sitio1)
-                dist, esapt = distancia_energia_sapt(caminho(dir, arq))
-                ind_menor_en = indice_para_menor_energia_sapt(esapt)
-                sitio1_mol1[metodo_base] = dist[ind_menor_en], min(esapt)
-                sitio1_mol1_ord = ordena_dicionario(sitio1_mol1)
+    if 'sapt' in dir:
+        for arq in arqs:
+            if 'sapt' in arq:
+                if sitio1 in caminho(dir, arq):
+                    if molecula1 in caminho(dir, arq):
+                        metodo_base = pega_metodo_base(sitio1)
+                        dist, esapt = distancia_energia_sapt(caminho(dir, arq))
+                        ind_menor_en = indice_para_menor_energia_sapt(esapt)
+                        sitio1_mol1[metodo_base] = dist[ind_menor_en], min(esapt)
+                        sitio1_mol1_ord = ordena_dicionario(sitio1_mol1)
 
-            if molecula2 in caminho(dir, arq):
-                metodo_base = pega_metodo_base(sitio1)
-                dist, esapt = distancia_energia_sapt(caminho(dir, arq))
-                ind_menor_en = indice_para_menor_energia_sapt(esapt)
-                sitio1_mol2[metodo_base] = dist[ind_menor_en], min(esapt)
-                sitio1_mol2_ord = ordena_dicionario(sitio1_mol2)
+                    if molecula2 in caminho(dir, arq):
+                        metodo_base = pega_metodo_base(sitio1)
+                        dist, esapt = distancia_energia_sapt(caminho(dir, arq))
+                        ind_menor_en = indice_para_menor_energia_sapt(esapt)
+                        sitio1_mol2[metodo_base] = dist[ind_menor_en], min(esapt)
+                        sitio1_mol2_ord = ordena_dicionario(sitio1_mol2)
 
-            if molecula3 in caminho(dir, arq):
-                metodo_base = pega_metodo_base(sitio1)
-                dist, esapt = distancia_energia_sapt(caminho(dir, arq))
-                ind_menor_en = indice_para_menor_energia_sapt(esapt)
-                sitio1_mol3[metodo_base] = dist[ind_menor_en], min(esapt)
-                sitio1_mol3_ord = ordena_dicionario(sitio1_mol3)
+                    if molecula3 in caminho(dir, arq):
+                        metodo_base = pega_metodo_base(sitio1)
+                        dist, esapt = distancia_energia_sapt(caminho(dir, arq))
+                        ind_menor_en = indice_para_menor_energia_sapt(esapt)
+                        sitio1_mol3[metodo_base] = dist[ind_menor_en], min(esapt)
+                        sitio1_mol3_ord = ordena_dicionario(sitio1_mol3)
 
-            if molecula4 in caminho(dir, arq):
-                metodo_base = pega_metodo_base(sitio1)
-                dist, esapt = distancia_energia_sapt(caminho(dir, arq))
-                ind_menor_en = indice_para_menor_energia_sapt(esapt)
-                sitio1_mol4[metodo_base] = dist[ind_menor_en], min(esapt)
-                sitio1_mol4_ord = ordena_dicionario(sitio1_mol4)
+                    if molecula4 in caminho(dir, arq):
+                        metodo_base = pega_metodo_base(sitio1)
+                        dist, esapt = distancia_energia_sapt(caminho(dir, arq))
+                        ind_menor_en = indice_para_menor_energia_sapt(esapt)
+                        sitio1_mol4[metodo_base] = dist[ind_menor_en], min(esapt)
+                        sitio1_mol4_ord = ordena_dicionario(sitio1_mol4)
 
-        if sitio2 in caminho(dir, arq):
-            if molecula1 in caminho(dir, arq):
-                metodo_base = pega_metodo_base(sitio2)
-                dist, esapt = distancia_energia_sapt(caminho(dir, arq))
-                ind_menor_en = indice_para_menor_energia_sapt(esapt)
-                sitio2_mol1[metodo_base] = dist[ind_menor_en], min(esapt)
-                sitio2_mol1_ord = ordena_dicionario(sitio2_mol1)
+                if sitio2 in caminho(dir, arq):
+                    if molecula1 in caminho(dir, arq):
+                        metodo_base = pega_metodo_base(sitio2)
+                        dist, esapt = distancia_energia_sapt(caminho(dir, arq))
+                        ind_menor_en = indice_para_menor_energia_sapt(esapt)
+                        sitio2_mol1[metodo_base] = dist[ind_menor_en], min(esapt)
+                        sitio2_mol1_ord = ordena_dicionario(sitio2_mol1)
 
-            if molecula2 in caminho(dir, arq):
-                metodo_base = pega_metodo_base(sitio2)
-                dist, esapt = distancia_energia_sapt(caminho(dir, arq))
-                ind_menor_en = indice_para_menor_energia_sapt(esapt)
-                sitio2_mol2[metodo_base] = dist[ind_menor_en], min(esapt)
-                sitio2_mol2_ord = ordena_dicionario(sitio2_mol2)
+                    if molecula2 in caminho(dir, arq):
+                        metodo_base = pega_metodo_base(sitio2)
+                        dist, esapt = distancia_energia_sapt(caminho(dir, arq))
+                        ind_menor_en = indice_para_menor_energia_sapt(esapt)
+                        sitio2_mol2[metodo_base] = dist[ind_menor_en], min(esapt)
+                        sitio2_mol2_ord = ordena_dicionario(sitio2_mol2)
 
-            if molecula3 in caminho(dir, arq):
-                metodo_base = pega_metodo_base(sitio2)
-                dist, esapt = distancia_energia_sapt(caminho(dir, arq))
-                ind_menor_en = indice_para_menor_energia_sapt(esapt)
-                sitio2_mol3[metodo_base] = dist[ind_menor_en], min(esapt)
-                sitio2_mol3_ord = ordena_dicionario(sitio2_mol3)
+                    if molecula3 in caminho(dir, arq):
+                        metodo_base = pega_metodo_base(sitio2)
+                        dist, esapt = distancia_energia_sapt(caminho(dir, arq))
+                        ind_menor_en = indice_para_menor_energia_sapt(esapt)
+                        sitio2_mol3[metodo_base] = dist[ind_menor_en], min(esapt)
+                        sitio2_mol3_ord = ordena_dicionario(sitio2_mol3)
 
-            if molecula4 in caminho(dir, arq):
-                metodo_base = pega_metodo_base(sitio2)
-                dist, esapt = distancia_energia_sapt(caminho(dir, arq))
-                ind_menor_en = indice_para_menor_energia_sapt(esapt)
-                sitio2_mol4[metodo_base] = dist[ind_menor_en], min(esapt)
-                sitio2_mol4_ord = ordena_dicionario(sitio2_mol4)
+                    if molecula4 in caminho(dir, arq):
+                        metodo_base = pega_metodo_base(sitio2)
+                        dist, esapt = distancia_energia_sapt(caminho(dir, arq))
+                        ind_menor_en = indice_para_menor_energia_sapt(esapt)
+                        sitio2_mol4[metodo_base] = dist[ind_menor_en], min(esapt)
+                        sitio2_mol4_ord = ordena_dicionario(sitio2_mol4)
 
-        if sitio3 in caminho(dir, arq):
-            if molecula1 in caminho(dir, arq):
-                metodo_base = pega_metodo_base(sitio3)
-                dist, esapt = distancia_energia_sapt(caminho(dir, arq))
-                ind_menor_en = indice_para_menor_energia_sapt(esapt)
-                sitio3_mol1[metodo_base] = dist[ind_menor_en], min(esapt)
-                sitio3_mol1_ord = ordena_dicionario(sitio3_mol1)
+                if sitio3 in caminho(dir, arq):
+                    if molecula1 in caminho(dir, arq):
+                        metodo_base = pega_metodo_base(sitio3)
+                        dist, esapt = distancia_energia_sapt(caminho(dir, arq))
+                        ind_menor_en = indice_para_menor_energia_sapt(esapt)
+                        sitio3_mol1[metodo_base] = dist[ind_menor_en], min(esapt)
+                        sitio3_mol1_ord = ordena_dicionario(sitio3_mol1)
 
-            if molecula2 in caminho(dir, arq):
-                metodo_base = pega_metodo_base(sitio3)
-                dist, esapt = distancia_energia_sapt(caminho(dir, arq))
-                ind_menor_en = indice_para_menor_energia_sapt(esapt)
-                sitio3_mol2[metodo_base] = dist[ind_menor_en], min(esapt)
-                sitio3_mol2_ord = ordena_dicionario(sitio3_mol2)
+                    if molecula2 in caminho(dir, arq):
+                        metodo_base = pega_metodo_base(sitio3)
+                        dist, esapt = distancia_energia_sapt(caminho(dir, arq))
+                        ind_menor_en = indice_para_menor_energia_sapt(esapt)
+                        sitio3_mol2[metodo_base] = dist[ind_menor_en], min(esapt)
+                        sitio3_mol2_ord = ordena_dicionario(sitio3_mol2)
 
-            if molecula3 in caminho(dir, arq):
-                metodo_base = pega_metodo_base(sitio3)
-                dist, esapt = distancia_energia_sapt(caminho(dir, arq))
-                ind_menor_en = indice_para_menor_energia_sapt(esapt)
-                sitio3_mol3[metodo_base] = dist[ind_menor_en], min(esapt)
-                sitio3_mol3_ord = ordena_dicionario(sitio3_mol3)
+                    if molecula3 in caminho(dir, arq):
+                        metodo_base = pega_metodo_base(sitio3)
+                        dist, esapt = distancia_energia_sapt(caminho(dir, arq))
+                        ind_menor_en = indice_para_menor_energia_sapt(esapt)
+                        sitio3_mol3[metodo_base] = dist[ind_menor_en], min(esapt)
+                        sitio3_mol3_ord = ordena_dicionario(sitio3_mol3)
 
-            if molecula4 in caminho(dir, arq):
-                metodo_base = pega_metodo_base(sitio3)
-                dist, esapt = distancia_energia_sapt(caminho(dir, arq))
-                ind_menor_en = indice_para_menor_energia_sapt(esapt)
-                sitio3_mol4[metodo_base] = dist[ind_menor_en], min(esapt)
-                sitio3_mol4_ord = ordena_dicionario(sitio3_mol4)
+                    if molecula4 in caminho(dir, arq):
+                        metodo_base = pega_metodo_base(sitio3)
+                        dist, esapt = distancia_energia_sapt(caminho(dir, arq))
+                        ind_menor_en = indice_para_menor_energia_sapt(esapt)
+                        sitio3_mol4[metodo_base] = dist[ind_menor_en], min(esapt)
+                        sitio3_mol4_ord = ordena_dicionario(sitio3_mol4)
+
 
 print(f'Sitio 1 {molecula1}')
 print(sitio1_mol1_ord)
