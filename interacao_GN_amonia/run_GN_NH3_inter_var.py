@@ -6,14 +6,6 @@ import subprocess
 import time
 
 
-#si4.set_memory('20 GB')
-#psi4.set_num_threads(12)
-print('\n')
-psi4.core.set_output_file('output.dat', False)
-psi4.set_options({'freeze_core': 'true'})
-
-numpy_memory = 20
-
 def cria_diretorio(gas, metodo='sem_metodo', base='sem_base'):
     '''
     Essa função recebe três strings que correspondem ao gás nobre de interesse
@@ -49,37 +41,6 @@ def input_geo(geo, gas, d):
     symmetry c1
     """
     return input
-
-
-def casando(ghost):
-    def substitui(m):
-        text = m.group()
-        if text == 'N':
-            return ghost + '(N)'
-        if text == 'H':
-            return ghost + '(H)'
-    return substitui
-
-
-def Eint(matriz):
-    '''
-    Essa função recebe uma matriz com valores correspondetes as Energias
-    dos cálculos de estrutura eletrônica. A matriz (array) é composta por
-    3 colunas, das quais temos:
-    Col1 = Energia do Dimero
-    Col2 = Eneriga do monomero A
-    Col3 = Energia do monomero B
-    A função retorna a energia de interação (Eint) considerando a relação:
-    Eint = EAB - (EA + EB)
-    '''
-    EAB = [matriz[i, 0] for i in range(len(matriz))]
-    EA = [matriz[i, 1] for i in range(len(matriz))]
-    EB = [matriz[i, 2] for i in range(len(matriz))]
-
-    soma_AB = [i+j for i, j in zip(EA, EB)]
-    Eint = [i-j for i, j in zip(EAB, soma_AB)]
-
-    return Eint
 
 
 def cria_arquivo(nome, metodo, dist, eint1, eint2, eint3, eint4, eint5, eint6, eint7):
@@ -151,9 +112,9 @@ def move_diretorio(gas, metodo, base):
 #  Iniciamos a execução deste script considerando as geometrias que
 #  correspondem a molécula de amônia. Essas geometrias estão no
 #  diretorio corrente e foram orientadas segundo o sítio de interação
-#  de interesse.
+#  de interesse (sítio que desejamos ver as interações).
 #
-#  Todos os métodos foram estabelecidos da lista metodos bem como as
+#  Todos os métodos foram estabelecidos da lista métodos bem como as
 #  bases e os gases que desejamos interagir em suas respectivas listas.
 #
 #  --------------------------------------------------------------------
@@ -162,25 +123,36 @@ def move_diretorio(gas, metodo, base):
 #
 #  --------------------------------------------------------------------
 
+psi4.set_memory('15 GB')
+psi4.set_num_threads(8)
+print('\n')
+psi4.core.set_output_file('output.dat', False)
+psi4.set_options({'freeze_core': 'true'})
+numpy_memory = 15
+
 geometrias_amonia = glob('*_sapt.xyz')
-#print(geometrias_amonia)
 
-#metodos = ['ccsd', 'ccsd(t)', 'mp2', 'mp4', 'sapt0','sapt2', 'sapt2+',
-#           'sapt2+(3)', 'sapt2+3', 'sherrill_gold_standard']
+metodos = ['ccsd', 'ccsd(t)', 'mp2', 'mp4', 'sapt0','sapt2', 'sapt2+',
+           'sapt2+(3)', 'sapt2+3', 'sherrill_gold_standard']
 
-metodos = ['mp4',]
+bases = ['jun-cc-pvdz', 'jun-cc-pvdz', 'aug-cc-pvdz', 'aug-cc-pvtz',]
 
-#bases = ['jun-cc-pvdz', 'aug-cc-pvdz', 'aug-cc-pvtz', 'aug-cc-pvqz']
-bases = ['jun-cc-pvdz',]
+gases_nobres = ['He', 'Ne', 'Ar', 'Kr']
 
-gases_nobres = ['He',]
-
+# int_ini define o ponto inicial da CEP.
 int_ini = 3.2
-int_final = 6.8
+# int_final define o ponto final da CEP
+int_final = 8.6
+# inc_ini define o incremento inicial da CEP e será modificado devido as
+# mudanças na energia.
 inc_ini = 0.2
-const = 0.2
-conta = 0
+# conta_min define um contador a partir do ponto mínimo da CEP.
 conta_min = 0
+# conta_pass_min conta a quantidade de passos com menor incremento próximo
+# ao mínimo de energia na CEP
+conta_pass_min = 14
+# nova_dist1 define o intervalo de novas distâncias dentro de um intervalo
+# devido ao fato da energia ir diminuindo.
 nova_dist1 = 0
 
 for gas_nobre in gases_nobres:
@@ -210,21 +182,36 @@ for gas_nobre in gases_nobres:
                 esapt = []
 
                 while dist < int_final:
-                    # Construindo a geometria do Dimero
+                    # inc_iniruindo a geometria do Dimero
                     dimero = input_geo(str_geo, gas_nobre, dist)
+
+                    if metodo == 'sherrill_gold_standard':
+                        n = len(distancias)
+                        if n == 1:
+                            psi4.geometry(dimero)
+                            psi4.energy(metodo, bsse_type=['nocp', 'cp',])
+                            en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
+                            en_com_cp.append(psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
+                            psi4.core.clean()
+                            dist = round(int_ini + inc_ini, 2)
+                            distancias.append(dist)
+                        else:
+                            psi4.geometry(dimero)
+                            psi4.energy(metodo, bsse_type=['nocp', 'cp',])
+                            en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
+                            en_com_cp.append(psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
+                            psi4.core.clean()
+                            if en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min <= 2:
+                                nova_dist1 = round(dist+0.1, 2)
+                            elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min > 2 and conta_min < conta_pass_min:
+                                nova_dist1 = round(dist+0.05, 2)
+                            else:
+                                nova_dist1 = round(dist + inc_ini, 2)
+                            distancias.append(nova_dist1)
+                            dist = nova_dist1
+                            conta_min += 1
+
                     if metodo == 'ccsd(t)':
-                        psi4.geometry(dimero)
-                        psi4.energy(nivel, bsse_type=['nocp', 'cp',])
-                        en_sem_cp[i] = psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
-                        en_com_cp[i] = psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
-                        psi4.core.clean()
-                    if metodo == 'ccsd':
-                        psi4.geometry(dimero)
-                        psi4.energy(nivel, bsse_type=['nocp', 'cp',])
-                        en_sem_cp[i] = psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
-                        en_com_cp[i] = psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
-                        psi4.core.clean()
-                    if metodo == 'mp2':
                         n = len(distancias)
                         if n == 1:
                             psi4.geometry(dimero)
@@ -232,7 +219,7 @@ for gas_nobre in gases_nobres:
                             en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
                             en_com_cp.append(psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
                             psi4.core.clean()
-                            dist = round(int_ini + const, 2)
+                            dist = round(int_ini + inc_ini, 2)
                             distancias.append(dist)
                         else:
                             psi4.geometry(dimero)
@@ -242,12 +229,62 @@ for gas_nobre in gases_nobres:
                             psi4.core.clean()
                             if en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min <= 2:
                                 nova_dist1 = round(dist+0.1, 2)
-                                print(en_com_cp[-2])
-                            elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min > 2 and conta_min < 8:
+                            elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min > 2 and conta_min < conta_pass_min:
                                 nova_dist1 = round(dist+0.05, 2)
-                                print(en_com_cp[-2])
                             else:
-                                nova_dist1 = round(dist + const, 2)
+                                nova_dist1 = round(dist + inc_ini, 2)
+                            distancias.append(nova_dist1)
+                            dist = nova_dist1
+                            conta_min += 1
+
+                    if metodo == 'ccsd':
+                        n = len(distancias)
+                        if n == 1:
+                            psi4.geometry(dimero)
+                            psi4.energy(nivel, bsse_type=['nocp', 'cp',])
+                            en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
+                            en_com_cp.append(psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
+                            psi4.core.clean()
+                            dist = round(int_ini + inc_ini, 2)
+                            distancias.append(dist)
+                        else:
+                            psi4.geometry(dimero)
+                            psi4.energy(nivel, bsse_type=['nocp', 'cp',])
+                            en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
+                            en_com_cp.append(psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
+                            psi4.core.clean()
+                            if en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min <= 2:
+                                nova_dist1 = round(dist+0.1, 2)
+                            elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min > 2 and conta_min < conta_pass_min:
+                                nova_dist1 = round(dist+0.05, 2)
+                            else:
+                                nova_dist1 = round(dist + inc_ini, 2)
+                            distancias.append(nova_dist1)
+                            dist = nova_dist1
+                            conta_min += 1
+
+                    if metodo == 'mp2':
+                        n = len(distancias)
+                        if n == 1:
+                            psi4.geometry(dimero)
+                            psi4.energy(nivel, bsse_type=['nocp', 'cp',])
+                            en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
+                            en_com_cp.append(psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
+                            psi4.core.clean()
+                            dist = round(int_ini + inc_ini, 2)
+                            distancias.append(dist)
+                        else:
+                            psi4.geometry(dimero)
+                            psi4.energy(nivel, bsse_type=['nocp', 'cp',])
+                            en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
+                            en_com_cp.append(psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
+                            psi4.core.clean()
+                            if en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min <= 2:
+                                nova_dist1 = round(dist+0.1, 2)
+                            elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min > 2 and conta_min < conta_pass_min:
+                                nova_dist1 = round(dist+0.05, 2)
+                            else:
+                                nova_dist1 = round(dist + inc_ini, 2)
                             distancias.append(nova_dist1)
                             dist = nova_dist1
                             conta_min += 1
@@ -260,7 +297,7 @@ for gas_nobre in gases_nobres:
                             en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
                             en_com_cp.append(psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
                             psi4.core.clean()
-                            dist = round(int_ini + const, 2)
+                            dist = round(int_ini + inc_ini, 2)
                             distancias.append(dist)
                         else:
                             psi4.geometry(dimero)
@@ -270,12 +307,10 @@ for gas_nobre in gases_nobres:
                             psi4.core.clean()
                             if en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min <= 2:
                                 nova_dist1 = round(dist+0.1, 2)
-                                print(en_com_cp[-2])
-                            elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min > 2 and conta_min < 8:
+                            elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min > 2 and conta_min < conta_pass_min:
                                 nova_dist1 = round(dist+0.05, 2)
-                                print(en_com_cp[-2])
                             else:
-                                nova_dist1 = round(dist + const, 2)
+                                nova_dist1 = round(dist + inc_ini, 2)
                             distancias.append(nova_dist1)
                             dist = nova_dist1
                             conta_min += 1
@@ -291,11 +326,8 @@ for gas_nobre in gases_nobres:
                             eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
                             esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
                             psi4.core.clean()
-                            dist = round(int_ini + const, 2)
+                            dist = round(int_ini + inc_ini, 2)
                             distancias.append(dist)
-                            print(len(esapt))
-                            print(type(distancias))
-                            print(esapt[-1])
                         else:
                             psi4.geometry(dimero)
                             psi4.energy(nivel)
@@ -305,17 +337,12 @@ for gas_nobre in gases_nobres:
                             eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
                             esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
                             psi4.core.clean()
-                            print(len(esapt))
-                            print(type(distancias))
-                            print(esapt[-1])
                             if esapt[-1] - esapt[-2] < 0 and conta_min <= 2:
                                 nova_dist1 = round(dist+0.1, 2)
-                                print(esapt[-2])
-                            elif esapt[-1] - esapt[-2] < 0 and conta_min > 2 and conta_min < 8:
+                            elif esapt[-1] - esapt[-2] < 0 and conta_min > 2 and conta_min < conta_pass_min:
                                 nova_dist1 = round(dist+0.05, 2)
-                                print(esapt[-2])
                             else:
-                                nova_dist1 = round(dist + const, 2)
+                                nova_dist1 = round(dist + inc_ini, 2)
                             distancias.append(nova_dist1)
                             dist = nova_dist1
                             conta_min += 1
@@ -331,11 +358,8 @@ for gas_nobre in gases_nobres:
                                 eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
                                 esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
                                 psi4.core.clean()
-                                dist = round(int_ini + const, 2)
+                                dist = round(int_ini + inc_ini, 2)
                                 distancias.append(dist)
-                                print(len(esapt))
-                                print(type(distancias))
-                                print(esapt[-1])
                             else:
                                 psi4.geometry(dimero)
                                 psi4.energy(nivel)
@@ -345,17 +369,12 @@ for gas_nobre in gases_nobres:
                                 eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
                                 esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
                                 psi4.core.clean()
-                                print(len(esapt))
-                                print(type(distancias))
-                                print(esapt[-1])
                                 if esapt[-1] - esapt[-2] < 0 and conta_min <= 2:
                                     nova_dist1 = round(dist+0.1, 2)
-                                    print(esapt[-2])
-                                elif esapt[-1] - esapt[-2] < 0 and conta_min > 2 and conta_min < 8:
+                                elif esapt[-1] - esapt[-2] < 0 and conta_min > 2 and conta_min < conta_pass_min:
                                     nova_dist1 = round(dist+0.05, 2)
-                                    print(esapt[-2])
                                 else:
-                                    nova_dist1 = round(dist + const, 2)
+                                    nova_dist1 = round(dist + inc_ini, 2)
                                 distancias.append(nova_dist1)
                                 dist = nova_dist1
                                 conta_min += 1
@@ -371,11 +390,8 @@ for gas_nobre in gases_nobres:
                                 eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
                                 esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
                                 psi4.core.clean()
-                                dist = round(int_ini + const, 2)
+                                dist = round(int_ini + inc_ini, 2)
                                 distancias.append(dist)
-                                print(len(esapt))
-                                print(type(distancias))
-                                print(esapt[-1])
                             else:
                                 psi4.geometry(dimero)
                                 psi4.energy(nivel)
@@ -385,17 +401,12 @@ for gas_nobre in gases_nobres:
                                 eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
                                 esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
                                 psi4.core.clean()
-                                print(len(esapt))
-                                print(type(distancias))
-                                print(esapt[-1])
                                 if esapt[-1] - esapt[-2] < 0 and conta_min <= 2:
                                     nova_dist1 = round(dist+0.1, 2)
-                                    print(esapt[-2])
-                                elif esapt[-1] - esapt[-2] < 0 and conta_min > 2 and conta_min < 8:
+                                elif esapt[-1] - esapt[-2] < 0 and conta_min > 2 and conta_min < conta_pass_min:
                                     nova_dist1 = round(dist+0.05, 2)
-                                    print(esapt[-2])
                                 else:
-                                    nova_dist1 = round(dist + const, 2)
+                                    nova_dist1 = round(dist + inc_ini, 2)
                                 distancias.append(nova_dist1)
                                 dist = nova_dist1
                                 conta_min += 1
@@ -411,11 +422,8 @@ for gas_nobre in gases_nobres:
                                 eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
                                 esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
                                 psi4.core.clean()
-                                dist = round(int_ini + const, 2)
+                                dist = round(int_ini + inc_ini, 2)
                                 distancias.append(dist)
-                                print(len(esapt))
-                                print(type(distancias))
-                                print(esapt[-1])
                             else:
                                 psi4.geometry(dimero)
                                 psi4.energy(nivel)
@@ -425,17 +433,12 @@ for gas_nobre in gases_nobres:
                                 eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
                                 esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
                                 psi4.core.clean()
-                                print(len(esapt))
-                                print(type(distancias))
-                                print(esapt[-1])
                                 if esapt[-1] - esapt[-2] < 0 and conta_min <= 2:
                                     nova_dist1 = round(dist+0.1, 2)
-                                    print(esapt[-2])
-                                elif esapt[-1] - esapt[-2] < 0 and conta_min > 2 and conta_min < 8:
+                                elif esapt[-1] - esapt[-2] < 0 and conta_min > 2 and conta_min < conta_pass_min:
                                     nova_dist1 = round(dist+0.05, 2)
-                                    print(esapt[-2])
                                 else:
-                                    nova_dist1 = round(dist + const, 2)
+                                    nova_dist1 = round(dist + inc_ini, 2)
                                 distancias.append(nova_dist1)
                                 dist = nova_dist1
                                 conta_min += 1
@@ -451,11 +454,8 @@ for gas_nobre in gases_nobres:
                             eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
                             esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
                             psi4.core.clean()
-                            dist = round(int_ini + const, 2)
+                            dist = round(int_ini + inc_ini, 2)
                             distancias.append(dist)
-                            print(len(esapt))
-                            print(type(distancias))
-                            print(esapt[-1])
                         else:
                             psi4.geometry(dimero)
                             psi4.energy(nivel)
@@ -465,35 +465,16 @@ for gas_nobre in gases_nobres:
                             eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
                             esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
                             psi4.core.clean()
-                            print(len(esapt))
-                            print(type(distancias))
-                            print(esapt[-1])
                             if esapt[-1] - esapt[-2] < 0 and conta_min <= 2:
                                 nova_dist1 = round(dist+0.1, 2)
-                                print(esapt[-2])
-                            elif esapt[-1] - esapt[-2] < 0 and conta_min > 2 and conta_min < 8:
+                            elif esapt[-1] - esapt[-2] < 0 and conta_min > 2 and conta_min < conta_pass_min:
                                 nova_dist1 = round(dist+0.05, 2)
-                                print(esapt[-2])
                             else:
-                                nova_dist1 = round(dist + const, 2)
+                                nova_dist1 = round(dist + inc_ini, 2)
                             distancias.append(nova_dist1)
                             dist = nova_dist1
                             conta_min += 1
 
-                    if metodo == 'sherrill_gold_standard':
-                        psi4.geometry(dimero)
-                        psi4.energy(metodo, bsse_type=['nocp', 'cp',])
-                        en_sem_cp[i] = psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
-                        en_com_cp[i] = psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
-                        psi4.core.clean()
-
-                    #distancias = np.arange(int_ini, int_final, inc_ini)
-            print(en_sem_cp)
-            print('-------------')
-            print(en_com_cp)
-            print('-------------')
-            print(distancias)
-        '''
                 if metodo != 'sherrill_gold_standard':
                     sitio_inte = geo.replace('sapt.xyz', '').replace('amonia', '')
                     nome_arq_out = metodo +  sitio_inte + base + '.dat'
@@ -505,6 +486,5 @@ for gas_nobre in gases_nobres:
                     nome_arq_out = metodo +  sitio_inte + '.dat'
                     cria_arquivo(nome_arq_out, metodo, distancias, en_sem_cp, en_com_cp,
                                  eelst, eind, edisp, eexch, esapt)
-                    move_arquivo(nome_arq_out, gas_nobre, metodo, base='')
+                    move_arquivo(nome_arq_out, gas_nobre, metodo, base='_')
             move_diretorio(gas_nobre, metodo, base)
-         '''
