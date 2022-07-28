@@ -135,7 +135,7 @@ geometrias_amonia = glob('*_sapt.xyz')
 metodos = ['ccsd', 'ccsd(t)', 'mp2', 'mp4', 'sapt0','sapt2', 'sapt2+',
            'sapt2+(3)', 'sapt2+3', 'sherrill_gold_standard']
 
-bases = ['jun-cc-pvdz', 'jun-cc-pvdz', 'aug-cc-pvdz', 'aug-cc-pvtz',]
+bases = ['jun-cc-pvdz', 'jun-cc-pvtz', 'aug-cc-pvdz', 'aug-cc-pvtz',]
 
 gases_nobres = ['He', 'Ne', 'Ar', 'Kr']
 
@@ -474,6 +474,8 @@ for gas_nobre in gases_nobres:
                             distancias.append(nova_dist1)
                             dist = nova_dist1
                             conta_min += 1
+
+                conta_min = 0
 
                 if metodo != 'sherrill_gold_standard':
                     sitio_inte = geo.replace('sapt.xyz', '').replace('amonia', '')
