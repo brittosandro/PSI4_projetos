@@ -6,8 +6,8 @@ import subprocess
 import time
 
 
-psi4.set_memory('20 GB')
-psi4.set_num_threads(12)
+#si4.set_memory('20 GB')
+#psi4.set_num_threads(12)
 print('\n')
 psi4.core.set_output_file('output.dat', False)
 psi4.set_options({'freeze_core': 'true'})
@@ -168,7 +168,7 @@ geometrias_amonia = glob('*_sapt.xyz')
 #metodos = ['ccsd', 'ccsd(t)', 'mp2', 'mp4', 'sapt0','sapt2', 'sapt2+',
 #           'sapt2+(3)', 'sapt2+3', 'sherrill_gold_standard']
 
-metodos = ['sapt0',]
+metodos = ['mp4',]
 
 #bases = ['jun-cc-pvdz', 'aug-cc-pvdz', 'aug-cc-pvtz', 'aug-cc-pvqz']
 bases = ['jun-cc-pvdz',]
@@ -178,11 +178,9 @@ gases_nobres = ['He',]
 int_ini = 3.2
 int_final = 6.8
 inc_ini = 0.2
-inc_intermediario1 = 0.15
-inc_intermediario2 = 0.25
 const = 0.2
 conta = 0
-
+conta_min = 0
 nova_dist1 = 0
 
 for gas_nobre in gases_nobres:
@@ -199,27 +197,19 @@ for gas_nobre in gases_nobres:
                 with open(geo, 'r') as f:
                     str_geo = f.read()
 
-                #eccsd = cria_matriz(distancias)
-                #eccsdt = cria_matriz(distancias)
-                distancias = np.arange(int_ini, int_final, inc_ini)
+                distancias = [int_ini]
+                dist = int_ini
 
-                #en_sem_cp =  np.zeros((len(distancias)))
-                #en_com_cp = np.zeros((len(distancias)))
+                en_sem_cp =  []
+                en_com_cp = []
 
-                #eelst = np.zeros((len(distancias)))
-                eelst = {}
-                #eind = np.zeros((len(distancias)))
-                eind = {}
-                #edisp = np.zeros((len(distancias)))
-                edisp = {}
-                #eexch = np.zeros((len(distancias)))
-                eexch = {}
-                #esapt = np.zeros((len(distancias)))
-                esapt = {}
-                #print(esapt)
+                eelst = []
+                eind = []
+                edisp = []
+                eexch = []
+                esapt = []
 
-                for i, dist in enumerate(distancias):
-                    dist = round(dist, 2)
+                while dist < int_final:
                     # Construindo a geometria do Dimero
                     dimero = input_geo(str_geo, gas_nobre, dist)
                     if metodo == 'ccsd(t)':
@@ -235,99 +225,260 @@ for gas_nobre in gases_nobres:
                         en_com_cp[i] = psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
                         psi4.core.clean()
                     if metodo == 'mp2':
-                        psi4.geometry(dimero)
-                        psi4.energy(nivel, bsse_type=['nocp', 'cp',])
-                        en_sem_cp[i] = psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
-                        en_com_cp[i] = psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
-                        psi4.core.clean()
-                    if metodo == 'mp4':
-                        psi4.geometry(dimero)
-                        psi4.energy(nivel, bsse_type=['nocp', 'cp',])
-                        en_sem_cp[i] = psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
-                        en_com_cp[i] = psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
-                        psi4.core.clean()
-                    if metodo == 'sapt0':
-                        #print(i)
-                        #print(esapt)
-                        if i >= 3:
-                            #print(dist)
-                            en_list = list(esapt.values())
-                            n = len(en_list)
-                            print(en_list)
-                            #decr = 0.2
-                            for j in range(0, n-1):
-                                if en_list[j] - en_list[j+1] > 0:
-                                    print(f'{en_list[j]} > { en_list[j+1]}')
-                                    print(dist)
-                                    nova_dist1 = round(dist, 2)
-                                    #print(f'nova dist {nova_dist1}')
-                                    dimero = input_geo(str_geo, gas_nobre, nova_dist1)
-                                    psi4.geometry(dimero)
-                                    psi4.energy(nivel)
-                                    eelst[nova_dist1] = psi4.variable('SAPT ELST ENERGY') * 27211.4
-                                    eind[nova_dist1] = psi4.variable('SAPT IND ENERGY') * 27211.4
-                                    edisp[nova_dist1] = psi4.variable('SAPT DISP ENERGY') * 27211.4
-                                    eexch[nova_dist1] = psi4.variable('SAPT EXCH ENERGY') * 27211.4
-                                    esapt[nova_dist1] = psi4.variable('SAPT TOTAL ENERGY') * 27211.4
-                                    psi4.core.clean()
-                                else:
-                                    nova_dist1 = round(dist, 2)
-                                    dimero = input_geo(str_geo, gas_nobre, nova_dist1)
-                                    psi4.geometry(dimero)
-                                    psi4.energy(nivel)
-                                    eelst[nova_dist1] = psi4.variable('SAPT ELST ENERGY') * 27211.4
-                                    eind[nova_dist1] = psi4.variable('SAPT IND ENERGY') * 27211.4
-                                    edisp[nova_dist1] = psi4.variable('SAPT DISP ENERGY') * 27211.4
-                                    eexch[nova_dist1] = psi4.variable('SAPT EXCH ENERGY') * 27211.4
-                                    esapt[nova_dist1] = psi4.variable('SAPT TOTAL ENERGY') * 27211.4
-                                    psi4.core.clean()
+                        n = len(distancias)
+                        if n == 1:
+                            psi4.geometry(dimero)
+                            psi4.energy(nivel, bsse_type=['nocp', 'cp',])
+                            en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
+                            en_com_cp.append(psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
+                            psi4.core.clean()
+                            dist = round(int_ini + const, 2)
+                            distancias.append(dist)
+                        else:
+                            psi4.geometry(dimero)
+                            psi4.energy(nivel, bsse_type=['nocp', 'cp',])
+                            en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
+                            en_com_cp.append(psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
+                            psi4.core.clean()
+                            if en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min <= 2:
+                                nova_dist1 = round(dist+0.1, 2)
+                                print(en_com_cp[-2])
+                            elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min > 2 and conta_min < 8:
+                                nova_dist1 = round(dist+0.05, 2)
+                                print(en_com_cp[-2])
+                            else:
+                                nova_dist1 = round(dist + const, 2)
+                            distancias.append(nova_dist1)
+                            dist = nova_dist1
+                            conta_min += 1
 
+                    if metodo == 'mp4':
+                        n = len(distancias)
+                        if n == 1:
+                            psi4.geometry(dimero)
+                            psi4.energy(nivel, bsse_type=['nocp', 'cp',])
+                            en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
+                            en_com_cp.append(psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
+                            psi4.core.clean()
+                            dist = round(int_ini + const, 2)
+                            distancias.append(dist)
+                        else:
+                            psi4.geometry(dimero)
+                            psi4.energy(nivel, bsse_type=['nocp', 'cp',])
+                            en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
+                            en_com_cp.append(psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
+                            psi4.core.clean()
+                            if en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min <= 2:
+                                nova_dist1 = round(dist+0.1, 2)
+                                print(en_com_cp[-2])
+                            elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min > 2 and conta_min < 8:
+                                nova_dist1 = round(dist+0.05, 2)
+                                print(en_com_cp[-2])
+                            else:
+                                nova_dist1 = round(dist + const, 2)
+                            distancias.append(nova_dist1)
+                            dist = nova_dist1
+                            conta_min += 1
+
+                    if metodo == 'sapt0':
+                        n = len(distancias)
+                        if n == 1:
+                            psi4.geometry(dimero)
+                            psi4.energy(nivel)
+                            eelst.append(psi4.variable('SAPT ELST ENERGY') * 27211.4)
+                            eind.append(psi4.variable('SAPT IND ENERGY') * 27211.4)
+                            edisp.append(psi4.variable('SAPT DISP ENERGY') * 27211.4)
+                            eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
+                            esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
+                            psi4.core.clean()
+                            dist = round(int_ini + const, 2)
+                            distancias.append(dist)
+                            print(len(esapt))
+                            print(type(distancias))
+                            print(esapt[-1])
                         else:
                             psi4.geometry(dimero)
                             psi4.energy(nivel)
-                            eelst[dist] = psi4.variable('SAPT ELST ENERGY') * 27211.4
-                            eind[dist] = psi4.variable('SAPT IND ENERGY') * 27211.4
-                            edisp[dist] = psi4.variable('SAPT DISP ENERGY') * 27211.4
-                            eexch[dist] = psi4.variable('SAPT EXCH ENERGY') * 27211.4
-                            esapt[dist] = psi4.variable('SAPT TOTAL ENERGY') * 27211.4
+                            eelst.append(psi4.variable('SAPT ELST ENERGY') * 27211.4)
+                            eind.append(psi4.variable('SAPT IND ENERGY') * 27211.4)
+                            edisp.append(psi4.variable('SAPT DISP ENERGY') * 27211.4)
+                            eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
+                            esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
                             psi4.core.clean()
+                            print(len(esapt))
+                            print(type(distancias))
+                            print(esapt[-1])
+                            if esapt[-1] - esapt[-2] < 0 and conta_min <= 2:
+                                nova_dist1 = round(dist+0.1, 2)
+                                print(esapt[-2])
+                            elif esapt[-1] - esapt[-2] < 0 and conta_min > 2 and conta_min < 8:
+                                nova_dist1 = round(dist+0.05, 2)
+                                print(esapt[-2])
+                            else:
+                                nova_dist1 = round(dist + const, 2)
+                            distancias.append(nova_dist1)
+                            dist = nova_dist1
+                            conta_min += 1
 
                     if metodo == 'sapt2':
-                        psi4.geometry(dimero)
-                        psi4.energy(nivel)
-                        eelst[i] = psi4.variable('SAPT ELST ENERGY') * 27211.4
-                        eind[i] = psi4.variable('SAPT IND ENERGY') * 27211.4
-                        edisp[i] = psi4.variable('SAPT DISP ENERGY') * 27211.4
-                        eexch[i] = psi4.variable('SAPT EXCH ENERGY') * 27211.4
-                        esapt[i] = psi4.variable('SAPT TOTAL ENERGY') * 27211.4
-                        psi4.core.clean()
+                            n = len(distancias)
+                            if n == 1:
+                                psi4.geometry(dimero)
+                                psi4.energy(nivel)
+                                eelst.append(psi4.variable('SAPT ELST ENERGY') * 27211.4)
+                                eind.append(psi4.variable('SAPT IND ENERGY') * 27211.4)
+                                edisp.append(psi4.variable('SAPT DISP ENERGY') * 27211.4)
+                                eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
+                                esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
+                                psi4.core.clean()
+                                dist = round(int_ini + const, 2)
+                                distancias.append(dist)
+                                print(len(esapt))
+                                print(type(distancias))
+                                print(esapt[-1])
+                            else:
+                                psi4.geometry(dimero)
+                                psi4.energy(nivel)
+                                eelst.append(psi4.variable('SAPT ELST ENERGY') * 27211.4)
+                                eind.append(psi4.variable('SAPT IND ENERGY') * 27211.4)
+                                edisp.append(psi4.variable('SAPT DISP ENERGY') * 27211.4)
+                                eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
+                                esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
+                                psi4.core.clean()
+                                print(len(esapt))
+                                print(type(distancias))
+                                print(esapt[-1])
+                                if esapt[-1] - esapt[-2] < 0 and conta_min <= 2:
+                                    nova_dist1 = round(dist+0.1, 2)
+                                    print(esapt[-2])
+                                elif esapt[-1] - esapt[-2] < 0 and conta_min > 2 and conta_min < 8:
+                                    nova_dist1 = round(dist+0.05, 2)
+                                    print(esapt[-2])
+                                else:
+                                    nova_dist1 = round(dist + const, 2)
+                                distancias.append(nova_dist1)
+                                dist = nova_dist1
+                                conta_min += 1
+
                     if metodo == 'sapt2+':
-                        psi4.geometry(dimero)
-                        psi4.energy(nivel)
-                        eelst[i] = psi4.variable('SAPT ELST ENERGY') * 27211.4
-                        eind[i] = psi4.variable('SAPT IND ENERGY') * 27211.4
-                        edisp[i] = psi4.variable('SAPT DISP ENERGY') * 27211.4
-                        eexch[i] = psi4.variable('SAPT EXCH ENERGY') * 27211.4
-                        esapt[i] = psi4.variable('SAPT TOTAL ENERGY') * 27211.4
-                        psi4.core.clean()
+                            n = len(distancias)
+                            if n == 1:
+                                psi4.geometry(dimero)
+                                psi4.energy(nivel)
+                                eelst.append(psi4.variable('SAPT ELST ENERGY') * 27211.4)
+                                eind.append(psi4.variable('SAPT IND ENERGY') * 27211.4)
+                                edisp.append(psi4.variable('SAPT DISP ENERGY') * 27211.4)
+                                eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
+                                esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
+                                psi4.core.clean()
+                                dist = round(int_ini + const, 2)
+                                distancias.append(dist)
+                                print(len(esapt))
+                                print(type(distancias))
+                                print(esapt[-1])
+                            else:
+                                psi4.geometry(dimero)
+                                psi4.energy(nivel)
+                                eelst.append(psi4.variable('SAPT ELST ENERGY') * 27211.4)
+                                eind.append(psi4.variable('SAPT IND ENERGY') * 27211.4)
+                                edisp.append(psi4.variable('SAPT DISP ENERGY') * 27211.4)
+                                eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
+                                esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
+                                psi4.core.clean()
+                                print(len(esapt))
+                                print(type(distancias))
+                                print(esapt[-1])
+                                if esapt[-1] - esapt[-2] < 0 and conta_min <= 2:
+                                    nova_dist1 = round(dist+0.1, 2)
+                                    print(esapt[-2])
+                                elif esapt[-1] - esapt[-2] < 0 and conta_min > 2 and conta_min < 8:
+                                    nova_dist1 = round(dist+0.05, 2)
+                                    print(esapt[-2])
+                                else:
+                                    nova_dist1 = round(dist + const, 2)
+                                distancias.append(nova_dist1)
+                                dist = nova_dist1
+                                conta_min += 1
+
                     if metodo == 'sapt2+(3)':
-                        psi4.geometry(dimero)
-                        psi4.energy(nivel)
-                        eelst[i] = psi4.variable('SAPT ELST ENERGY') * 27211.4
-                        eind[i] = psi4.variable('SAPT IND ENERGY') * 27211.4
-                        edisp[i] = psi4.variable('SAPT DISP ENERGY') * 27211.4
-                        eexch[i] = psi4.variable('SAPT EXCH ENERGY') * 27211.4
-                        esapt[i] = psi4.variable('SAPT TOTAL ENERGY') * 27211.4
-                        psi4.core.clean()
+                            n = len(distancias)
+                            if n == 1:
+                                psi4.geometry(dimero)
+                                psi4.energy(nivel)
+                                eelst.append(psi4.variable('SAPT ELST ENERGY') * 27211.4)
+                                eind.append(psi4.variable('SAPT IND ENERGY') * 27211.4)
+                                edisp.append(psi4.variable('SAPT DISP ENERGY') * 27211.4)
+                                eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
+                                esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
+                                psi4.core.clean()
+                                dist = round(int_ini + const, 2)
+                                distancias.append(dist)
+                                print(len(esapt))
+                                print(type(distancias))
+                                print(esapt[-1])
+                            else:
+                                psi4.geometry(dimero)
+                                psi4.energy(nivel)
+                                eelst.append(psi4.variable('SAPT ELST ENERGY') * 27211.4)
+                                eind.append(psi4.variable('SAPT IND ENERGY') * 27211.4)
+                                edisp.append(psi4.variable('SAPT DISP ENERGY') * 27211.4)
+                                eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
+                                esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
+                                psi4.core.clean()
+                                print(len(esapt))
+                                print(type(distancias))
+                                print(esapt[-1])
+                                if esapt[-1] - esapt[-2] < 0 and conta_min <= 2:
+                                    nova_dist1 = round(dist+0.1, 2)
+                                    print(esapt[-2])
+                                elif esapt[-1] - esapt[-2] < 0 and conta_min > 2 and conta_min < 8:
+                                    nova_dist1 = round(dist+0.05, 2)
+                                    print(esapt[-2])
+                                else:
+                                    nova_dist1 = round(dist + const, 2)
+                                distancias.append(nova_dist1)
+                                dist = nova_dist1
+                                conta_min += 1
+
                     if metodo == 'sapt2+3':
-                        psi4.geometry(dimero)
-                        psi4.energy(nivel)
-                        eelst[i] = psi4.variable('SAPT ELST ENERGY') * 27211.4
-                        eind[i] = psi4.variable('SAPT IND ENERGY') * 27211.4
-                        edisp[i] = psi4.variable('SAPT DISP ENERGY') * 27211.4
-                        eexch[i] = psi4.variable('SAPT EXCH ENERGY') * 27211.4
-                        esapt[i] = psi4.variable('SAPT TOTAL ENERGY') * 27211.4
-                        psi4.core.clean()
+                        n = len(distancias)
+                        if n == 1:
+                            psi4.geometry(dimero)
+                            psi4.energy(nivel)
+                            eelst.append(psi4.variable('SAPT ELST ENERGY') * 27211.4)
+                            eind.append(psi4.variable('SAPT IND ENERGY') * 27211.4)
+                            edisp.append(psi4.variable('SAPT DISP ENERGY') * 27211.4)
+                            eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
+                            esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
+                            psi4.core.clean()
+                            dist = round(int_ini + const, 2)
+                            distancias.append(dist)
+                            print(len(esapt))
+                            print(type(distancias))
+                            print(esapt[-1])
+                        else:
+                            psi4.geometry(dimero)
+                            psi4.energy(nivel)
+                            eelst.append(psi4.variable('SAPT ELST ENERGY') * 27211.4)
+                            eind.append(psi4.variable('SAPT IND ENERGY') * 27211.4)
+                            edisp.append(psi4.variable('SAPT DISP ENERGY') * 27211.4)
+                            eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
+                            esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
+                            psi4.core.clean()
+                            print(len(esapt))
+                            print(type(distancias))
+                            print(esapt[-1])
+                            if esapt[-1] - esapt[-2] < 0 and conta_min <= 2:
+                                nova_dist1 = round(dist+0.1, 2)
+                                print(esapt[-2])
+                            elif esapt[-1] - esapt[-2] < 0 and conta_min > 2 and conta_min < 8:
+                                nova_dist1 = round(dist+0.05, 2)
+                                print(esapt[-2])
+                            else:
+                                nova_dist1 = round(dist + const, 2)
+                            distancias.append(nova_dist1)
+                            dist = nova_dist1
+                            conta_min += 1
 
                     if metodo == 'sherrill_gold_standard':
                         psi4.geometry(dimero)
@@ -336,8 +487,12 @@ for gas_nobre in gases_nobres:
                         en_com_cp[i] = psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
                         psi4.core.clean()
 
-                    distancias = np.arange(int_ini, int_final, inc_ini)
-            print(esapt)
+                    #distancias = np.arange(int_ini, int_final, inc_ini)
+            print(en_sem_cp)
+            print('-------------')
+            print(en_com_cp)
+            print('-------------')
+            print(distancias)
         '''
                 if metodo != 'sherrill_gold_standard':
                     sitio_inte = geo.replace('sapt.xyz', '').replace('amonia', '')

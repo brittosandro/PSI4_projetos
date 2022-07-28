@@ -1,3 +1,20 @@
+###############################################################################
+#
+# Esse script extrai dados de arquivos de energia total sapt em um diretório.
+#
+###############################################################################
+#
+#    O input deve ser colocado em um diretório em que estejam os diretórios
+# das respectivas moléculas que foram realizados os cálculos sapt. Por
+# exemplo: Existe um diretório chamado calc_Gases_Nobres_Amonia, e dentro
+# deste diretório existem vários subdiretórios chamados de Ar, He, Ne. Então
+# esse script deverá ser adicionado dentro de calc_Gases_Nobres_Amonia. O que
+# o script irá fazer e entrar em cada um dos subdiretórios (Ar, He, Ne)
+# ler os arquivos com os mais distintos cálculos sapt e mostrar dicionários
+# com todas as moléculas que estiverem no diretório.
+#
+###############################################################################
+
 import numpy as np
 import os
 
