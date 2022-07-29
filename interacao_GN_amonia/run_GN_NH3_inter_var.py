@@ -151,7 +151,8 @@ int_final = 8.6
 inc_ini = 0.2
 # conta_min define um contador a partir do ponto mínimo da CEP.
 conta_min = 0
-#
+# conta_min_energia é um contador para saber quantas vezes a energia é
+# minimizada a medida que a energia é calcula. 
 conta_min_energia = 0
 # conta_pass_min conta a quantidade de passos com menor incremento próximo
 # ao mínimo de energia na CEP
