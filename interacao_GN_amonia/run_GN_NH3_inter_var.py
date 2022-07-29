@@ -132,12 +132,15 @@ numpy_memory = 15
 
 geometrias_amonia = glob('*_sapt.xyz')
 
-metodos = ['ccsd', 'ccsd(t)', 'mp2', 'mp4', 'sapt0','sapt2', 'sapt2+',
-           'sapt2+(3)', 'sapt2+3', 'sherrill_gold_standard']
+#metodos = ['ccsd', 'ccsd(t)', 'mp2', 'mp4', 'sapt0','sapt2', 'sapt2+',
+#           'sapt2+(3)', 'sapt2+3', 'sherrill_gold_standard']
+
+metodos = ['ccsd',]
 
 bases = ['jun-cc-pvdz', 'jun-cc-pvtz', 'aug-cc-pvdz', 'aug-cc-pvtz',]
 
-gases_nobres = ['He', 'Ne', 'Ar', 'Kr']
+#gases_nobres = ['He', 'Ne', 'Ar', 'Kr']
+gases_nobres = ['He',]
 
 # int_ini define o ponto inicial da CEP.
 int_ini = 3.2
@@ -148,6 +151,8 @@ int_final = 8.6
 inc_ini = 0.2
 # conta_min define um contador a partir do ponto mínimo da CEP.
 conta_min = 0
+#
+conta_min_energia = 0
 # conta_pass_min conta a quantidade de passos com menor incremento próximo
 # ao mínimo de energia na CEP
 conta_pass_min = 14
@@ -181,7 +186,7 @@ for gas_nobre in gases_nobres:
                 eexch = []
                 esapt = []
 
-                while dist < int_final:
+                while dist <= int_final:
                     # inc_iniruindo a geometria do Dimero
                     dimero = input_geo(str_geo, gas_nobre, dist)
 
@@ -203,7 +208,7 @@ for gas_nobre in gases_nobres:
                             psi4.core.clean()
                             if en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min <= 2:
                                 nova_dist1 = round(dist+0.1, 2)
-                            elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min > 2 and conta_min < conta_pass_min:
+                            elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min > 1 and conta_min < conta_pass_min:
                                 nova_dist1 = round(dist+0.05, 2)
                             else:
                                 nova_dist1 = round(dist + inc_ini, 2)
@@ -229,7 +234,7 @@ for gas_nobre in gases_nobres:
                             psi4.core.clean()
                             if en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min <= 2:
                                 nova_dist1 = round(dist+0.1, 2)
-                            elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min > 2 and conta_min < conta_pass_min:
+                            elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min > 1 and conta_min < conta_pass_min:
                                 nova_dist1 = round(dist+0.05, 2)
                             else:
                                 nova_dist1 = round(dist + inc_ini, 2)
@@ -253,15 +258,17 @@ for gas_nobre in gases_nobres:
                             en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
                             en_com_cp.append(psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
                             psi4.core.clean()
-                            if en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min <= 2:
+                            if en_com_cp[-1] - en_com_cp[-2] < 0:
                                 nova_dist1 = round(dist+0.1, 2)
-                            elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min > 2 and conta_min < conta_pass_min:
+                                conta_min_energia += 1
+                            elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min_energia >= 2:
                                 nova_dist1 = round(dist+0.05, 2)
+                                conta_min_energia += 1
                             else:
                                 nova_dist1 = round(dist + inc_ini, 2)
                             distancias.append(nova_dist1)
                             dist = nova_dist1
-                            conta_min += 1
+                            #conta_min += 1
 
                     if metodo == 'mp2':
                         n = len(distancias)
@@ -281,7 +288,7 @@ for gas_nobre in gases_nobres:
                             psi4.core.clean()
                             if en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min <= 2:
                                 nova_dist1 = round(dist+0.1, 2)
-                            elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min > 2 and conta_min < conta_pass_min:
+                            elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min > 1 and conta_min < conta_pass_min:
                                 nova_dist1 = round(dist+0.05, 2)
                             else:
                                 nova_dist1 = round(dist + inc_ini, 2)
@@ -307,7 +314,7 @@ for gas_nobre in gases_nobres:
                             psi4.core.clean()
                             if en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min <= 2:
                                 nova_dist1 = round(dist+0.1, 2)
-                            elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min > 2 and conta_min < conta_pass_min:
+                            elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min > 1 and conta_min < conta_pass_min:
                                 nova_dist1 = round(dist+0.05, 2)
                             else:
                                 nova_dist1 = round(dist + inc_ini, 2)
@@ -339,7 +346,7 @@ for gas_nobre in gases_nobres:
                             psi4.core.clean()
                             if esapt[-1] - esapt[-2] < 0 and conta_min <= 2:
                                 nova_dist1 = round(dist+0.1, 2)
-                            elif esapt[-1] - esapt[-2] < 0 and conta_min > 2 and conta_min < conta_pass_min:
+                            elif esapt[-1] - esapt[-2] < 0 and conta_min > 1 and conta_min < conta_pass_min:
                                 nova_dist1 = round(dist+0.05, 2)
                             else:
                                 nova_dist1 = round(dist + inc_ini, 2)
@@ -371,7 +378,7 @@ for gas_nobre in gases_nobres:
                                 psi4.core.clean()
                                 if esapt[-1] - esapt[-2] < 0 and conta_min <= 2:
                                     nova_dist1 = round(dist+0.1, 2)
-                                elif esapt[-1] - esapt[-2] < 0 and conta_min > 2 and conta_min < conta_pass_min:
+                                elif esapt[-1] - esapt[-2] < 0 and conta_min > 1 and conta_min < conta_pass_min:
                                     nova_dist1 = round(dist+0.05, 2)
                                 else:
                                     nova_dist1 = round(dist + inc_ini, 2)
@@ -403,7 +410,7 @@ for gas_nobre in gases_nobres:
                                 psi4.core.clean()
                                 if esapt[-1] - esapt[-2] < 0 and conta_min <= 2:
                                     nova_dist1 = round(dist+0.1, 2)
-                                elif esapt[-1] - esapt[-2] < 0 and conta_min > 2 and conta_min < conta_pass_min:
+                                elif esapt[-1] - esapt[-2] < 0 and conta_min > 1 and conta_min < conta_pass_min:
                                     nova_dist1 = round(dist+0.05, 2)
                                 else:
                                     nova_dist1 = round(dist + inc_ini, 2)
@@ -435,7 +442,7 @@ for gas_nobre in gases_nobres:
                                 psi4.core.clean()
                                 if esapt[-1] - esapt[-2] < 0 and conta_min <= 2:
                                     nova_dist1 = round(dist+0.1, 2)
-                                elif esapt[-1] - esapt[-2] < 0 and conta_min > 2 and conta_min < conta_pass_min:
+                                elif esapt[-1] - esapt[-2] < 0 and conta_min > 1 and conta_min < conta_pass_min:
                                     nova_dist1 = round(dist+0.05, 2)
                                 else:
                                     nova_dist1 = round(dist + inc_ini, 2)
@@ -467,7 +474,7 @@ for gas_nobre in gases_nobres:
                             psi4.core.clean()
                             if esapt[-1] - esapt[-2] < 0 and conta_min <= 2:
                                 nova_dist1 = round(dist+0.1, 2)
-                            elif esapt[-1] - esapt[-2] < 0 and conta_min > 2 and conta_min < conta_pass_min:
+                            elif esapt[-1] - esapt[-2] < 0 and conta_min > 1 and conta_min < conta_pass_min:
                                 nova_dist1 = round(dist+0.05, 2)
                             else:
                                 nova_dist1 = round(dist + inc_ini, 2)
@@ -475,7 +482,7 @@ for gas_nobre in gases_nobres:
                             dist = nova_dist1
                             conta_min += 1
 
-                conta_min = 0
+                conta_min_energia = 0
 
                 if metodo != 'sherrill_gold_standard':
                     sitio_inte = geo.replace('sapt.xyz', '').replace('amonia', '')
