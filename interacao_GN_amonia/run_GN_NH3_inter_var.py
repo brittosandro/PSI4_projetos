@@ -149,16 +149,11 @@ int_final = 8.6
 # inc_ini define o incremento inicial da CEP e será modificado devido as
 # mudanças na energia.
 inc_ini = 0.2
-# conta_min define um contador a partir do ponto mínimo da CEP.
-conta_min = 0
 # conta_min_energia é um contador para saber quantas vezes a energia é
 # minimizada a medida que a energia é calcula.
 conta_min_energia = 0
-# conta_pass_min conta a quantidade de passos com menor incremento próximo
-# ao mínimo de energia na CEP
-conta_pass_min = 14
-# nova_dist1 define o intervalo de novas distâncias dentro de um intervalo
-# devido ao fato da energia ir diminuindo.
+# nova_dist1 define o intervalo de novas distâncias dentro de um cert intervalo
+# devido ao fato da energia diminuir.
 nova_dist1 = 0
 
 for gas_nobre in gases_nobres:
