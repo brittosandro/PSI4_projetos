@@ -6,6 +6,21 @@ import subprocess
 import time
 
 
+def calcula_energia(metodo, base, dimero):
+    if metodo == 'sherrill_gold_standard':
+        pass
+    metodo_nao_sapt = ('ccsd', 'ccsd(t)', 'mp2', 'mp4')
+    if metodo in metodo_nao_sapt:
+        psi4.geometry(dimero)
+        psi4.energy(f'{metodo}/{base}', bsse_type=['nocp', 'cp',])
+        e_s_cp = psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
+        e_c_cp = psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
+        psi4.core.clean()
+        return e_s_cp, e_c_cp
+    else:
+        pass
+
+
 def cria_diretorio(gas, metodo='sem_metodo', base='sem_base'):
     '''
     Essa função recebe três strings que correspondem ao gás nobre de interesse
@@ -30,8 +45,7 @@ def cria_matriz(d):
 def input_geo(geo, gas, d):
     '''
     Como parâmetros de entrada a função recebe a geometria do composto (geo)
-    os símbolos dos gases nobres (gas) as distancias de cada interação (d) e
-    um contador i e retorna a geometria do input.
+    os símbolos dos gases nobres (gas) as distancias de cada interação (d).
     '''
 
     input = """
@@ -135,9 +149,9 @@ geometrias_amonia = glob('*_sapt.xyz')
 #metodos = ['ccsd', 'ccsd(t)', 'mp2', 'mp4', 'sapt0','sapt2', 'sapt2+',
 #           'sapt2+(3)', 'sapt2+3', 'sherrill_gold_standard']
 
-metodos = ['ccsd',]
+metodos = ['mp2',]
 
-bases = ['jun-cc-pvdz', 'jun-cc-pvtz', 'aug-cc-pvdz', 'aug-cc-pvtz',]
+bases = ['jun-cc-pvdz', 'jun-cc-pvtz',]
 
 #gases_nobres = ['He', 'Ne', 'Ar', 'Kr']
 gases_nobres = ['He',]
@@ -191,8 +205,8 @@ for gas_nobre in gases_nobres:
                         if n == 1:
                             psi4.geometry(dimero)
                             psi4.energy(metodo, bsse_type=['nocp', 'cp',])
-                            en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
-                            en_com_cp.append(psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
+                            en_sem_cp.append()
+                            en_com_cp.append()
                             psi4.core.clean()
                             dist = round(int_ini + inc_ini, 2)
                             distancias.append(dist)
@@ -216,6 +230,7 @@ for gas_nobre in gases_nobres:
                     if metodo == 'ccsd(t)':
                         n = len(distancias)
                         if n == 1:
+                            calcula_energia(metodo, base, dimero)
                             psi4.geometry(dimero)
                             psi4.energy(nivel, bsse_type=['nocp', 'cp',])
                             en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
@@ -270,19 +285,17 @@ for gas_nobre in gases_nobres:
                     if metodo == 'mp2':
                         n = len(distancias)
                         if n == 1:
-                            psi4.geometry(dimero)
-                            psi4.energy(nivel, bsse_type=['nocp', 'cp',])
-                            en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
-                            en_com_cp.append(psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
-                            psi4.core.clean()
+                            en1 = calcula_energia(metodo, base, dimero)[0]
+                            en2 = calcula_energia(metodo, base, dimero)[1]
+                            en_sem_cp.append(en1)
+                            en_com_cp.append(en2)
                             dist = round(int_ini + inc_ini, 2)
                             distancias.append(dist)
                         else:
-                            psi4.geometry(dimero)
-                            psi4.energy(nivel, bsse_type=['nocp', 'cp',])
-                            en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
-                            en_com_cp.append(psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
-                            psi4.core.clean()
+                            en1 = calcula_energia(metodo, base, dimero)[0]
+                            en2 = calcula_energia(metodo, base, dimero)[1]
+                            en_sem_cp.append(en1)
+                            en_com_cp.append(en2)
                             if en_com_cp[-1] - en_com_cp[-2] < 0:
                                 nova_dist1 = round(dist+0.1, 2)
                                 conta_min_energia += 1
