@@ -15,7 +15,8 @@ def calcula_energia(metodo, base, dimero, fator_conversao=1):
     Se não for passado nenhum valor de fator de conversão
     esse será igual a 1, pois 1 é elemento neutro da multiplicação.
 
-    Dependendo do método passado a função retornará uma tupla.
+    A função retornará uma tupla com os valores de energia. Dependendo do
+    método de cálculo a tupla irá retornar dois ou mais valores.
 
     Para métodos como ccsd, ccsd(t), mp2, mp4 ou sherrill_gold_standard a tupla
     é formada pela energia sem cálculo de counterpoise e com cálculo de
