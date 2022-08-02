@@ -8,17 +8,41 @@ import time
 
 def calcula_energia(metodo, base, dimero):
     if metodo == 'sherrill_gold_standard':
-        pass
-    metodo_nao_sapt = ('ccsd', 'ccsd(t)', 'mp2', 'mp4')
-    if metodo in metodo_nao_sapt:
+        psi4.geometry(dimero)
+        psi4.energy(f'{metodo}', bsse_type=['nocp', 'cp',])
+
+        e_s_cp = psi4.variable(
+                'NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
+
+        e_c_cp = psi4.variable(
+                'CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
+        psi4.core.clean()
+
+        return e_s_cp, e_c_cp
+
+    metodo_nao_e_sapt = ('ccsd', 'ccsd(t)', 'mp2', 'mp4')
+    if metodo in metodo_nao_e_sapt:
         psi4.geometry(dimero)
         psi4.energy(f'{metodo}/{base}', bsse_type=['nocp', 'cp',])
-        e_s_cp = psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
-        e_c_cp = psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
+
+        e_s_cp = psi4.variable(
+                'NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
+
+        e_c_cp = psi4.variable(
+                'CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
         psi4.core.clean()
+
         return e_s_cp, e_c_cp
     else:
-        pass
+        psi4.geometry(dimero)
+        psi4.energy(f'{metodo}/{base}')
+        eels = psi4.variable('SAPT ELST ENERGY') * 27211.4
+        eind = psi4.variable('SAPT IND ENERGY') * 27211.4
+        edis = psi4.variable('SAPT DISP ENERGY') * 27211.4
+        exch = psi4.variable('SAPT EXCH ENERGY') * 27211.4
+        esap = psi4.variable('SAPT TOTAL ENERGY') * 27211.4
+
+        return eels, eind, edis, exch, esap
 
 
 def cria_diretorio(gas, metodo='sem_metodo', base='sem_base'):
@@ -149,26 +173,39 @@ geometrias_amonia = glob('*_sapt.xyz')
 #metodos = ['ccsd', 'ccsd(t)', 'mp2', 'mp4', 'sapt0','sapt2', 'sapt2+',
 #           'sapt2+(3)', 'sapt2+3', 'sherrill_gold_standard']
 
-metodos = ['mp2',]
+metodos = ['sapt0','sapt2', 'sapt2+', 'sapt2+(3)']
 
-bases = ['jun-cc-pvdz', 'jun-cc-pvtz',]
+bases = ['jun-cc-pvdz',]
 
 #gases_nobres = ['He', 'Ne', 'Ar', 'Kr']
 gases_nobres = ['He',]
 
 # int_ini define o ponto inicial da CEP.
 int_ini = 3.2
+
 # int_final define o ponto final da CEP
-int_final = 8.6
+int_final = 4.5
+
 # inc_ini define o incremento inicial da CEP e será modificado devido as
 # mudanças na energia.
 inc_ini = 0.2
+
 # conta_min_energia é um contador para saber quantas vezes a energia é
 # minimizada a medida que a energia é calcula.
 conta_min_energia = 0
+
 # nova_dist1 define o intervalo de novas distâncias dentro de um cert intervalo
 # devido ao fato da energia diminuir.
 nova_dist1 = 0
+
+# Caso queiramos apresentar um fator de conversão de energia que seja
+# conveniente com nosso estudo poderemos listar esse fator pelas variáveis
+# abaixo.
+# No caso do estudo da interação entre gases nobres e amônia é muito conveniente
+# utilizarmos mili eletron volts (meV), portanto devemos transformar de
+# hartree para meV. Assim a variável é hartree2meV, como o fator de conversão
+# é 27211.399
+hartree2meV = 27211.399
 
 for gas_nobre in gases_nobres:
     cria_diretorio(gas_nobre)
@@ -203,19 +240,17 @@ for gas_nobre in gases_nobres:
                     if metodo == 'sherrill_gold_standard':
                         n = len(distancias)
                         if n == 1:
-                            psi4.geometry(dimero)
-                            psi4.energy(metodo, bsse_type=['nocp', 'cp',])
-                            en_sem_cp.append()
-                            en_com_cp.append()
-                            psi4.core.clean()
+                            en1 = calcula_energia(metodo, base, dimero)[0]
+                            en2 = calcula_energia(metodo, base, dimero)[1]
+                            en_sem_cp.append(en1)
+                            en_com_cp.append(en2)
                             dist = round(int_ini + inc_ini, 2)
                             distancias.append(dist)
                         else:
-                            psi4.geometry(dimero)
-                            psi4.energy(metodo, bsse_type=['nocp', 'cp',])
-                            en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
-                            en_com_cp.append(psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
-                            psi4.core.clean()
+                            en1 = calcula_energia(metodo, base, dimero)[0]
+                            en2 = calcula_energia(metodo, base, dimero)[1]
+                            en_sem_cp.append(en1)
+                            en_com_cp.append(en2)
                             if en_com_cp[-1] - en_com_cp[-2] < 0:
                                 nova_dist1 = round(dist+0.1, 2)
                                 conta_min_energia += 1
@@ -230,20 +265,17 @@ for gas_nobre in gases_nobres:
                     if metodo == 'ccsd(t)':
                         n = len(distancias)
                         if n == 1:
-                            calcula_energia(metodo, base, dimero)
-                            psi4.geometry(dimero)
-                            psi4.energy(nivel, bsse_type=['nocp', 'cp',])
-                            en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
-                            en_com_cp.append(psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
-                            psi4.core.clean()
+                            en1 = calcula_energia(metodo, base, dimero)[0]
+                            en2 = calcula_energia(metodo, base, dimero)[1]
+                            en_sem_cp.append(en1)
+                            en_com_cp.append(en2)
                             dist = round(int_ini + inc_ini, 2)
                             distancias.append(dist)
                         else:
-                            psi4.geometry(dimero)
-                            psi4.energy(nivel, bsse_type=['nocp', 'cp',])
-                            en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
-                            en_com_cp.append(psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
-                            psi4.core.clean()
+                            en1 = calcula_energia(metodo, base, dimero)[0]
+                            en2 = calcula_energia(metodo, base, dimero)[1]
+                            en_sem_cp.append(en1)
+                            en_com_cp.append(en2)
                             if en_com_cp[-1] - en_com_cp[-2] < 0:
                                 nova_dist1 = round(dist+0.1, 2)
                                 conta_min_energia += 1
@@ -258,19 +290,17 @@ for gas_nobre in gases_nobres:
                     if metodo == 'ccsd':
                         n = len(distancias)
                         if n == 1:
-                            psi4.geometry(dimero)
-                            psi4.energy(nivel, bsse_type=['nocp', 'cp',])
-                            en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
-                            en_com_cp.append(psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
-                            psi4.core.clean()
+                            en1 = calcula_energia(metodo, base, dimero)[0]
+                            en2 = calcula_energia(metodo, base, dimero)[1]
+                            en_sem_cp.append(en1)
+                            en_com_cp.append(en2)
                             dist = round(int_ini + inc_ini, 2)
                             distancias.append(dist)
                         else:
-                            psi4.geometry(dimero)
-                            psi4.energy(nivel, bsse_type=['nocp', 'cp',])
-                            en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
-                            en_com_cp.append(psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
-                            psi4.core.clean()
+                            en1 = calcula_energia(metodo, base, dimero)[0]
+                            en2 = calcula_energia(metodo, base, dimero)[1]
+                            en_sem_cp.append(en1)
+                            en_com_cp.append(en2)
                             if en_com_cp[-1] - en_com_cp[-2] < 0:
                                 nova_dist1 = round(dist+0.1, 2)
                                 conta_min_energia += 1
@@ -310,19 +340,17 @@ for gas_nobre in gases_nobres:
                     if metodo == 'mp4':
                         n = len(distancias)
                         if n == 1:
-                            psi4.geometry(dimero)
-                            psi4.energy(nivel, bsse_type=['nocp', 'cp',])
-                            en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
-                            en_com_cp.append(psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
-                            psi4.core.clean()
+                            en1 = calcula_energia(metodo, base, dimero)[0]
+                            en2 = calcula_energia(metodo, base, dimero)[1]
+                            en_sem_cp.append(en1)
+                            en_com_cp.append(en2)
                             dist = round(int_ini + inc_ini, 2)
                             distancias.append(dist)
                         else:
-                            psi4.geometry(dimero)
-                            psi4.energy(nivel, bsse_type=['nocp', 'cp',])
-                            en_sem_cp.append(psi4.variable('NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
-                            en_com_cp.append(psi4.variable('CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4)
-                            psi4.core.clean()
+                            en1 = calcula_energia(metodo, base, dimero)[0]
+                            en2 = calcula_energia(metodo, base, dimero)[1]
+                            en_sem_cp.append(en1)
+                            en_com_cp.append(en2)
                             if en_com_cp[-1] - en_com_cp[-2] < 0:
                                 nova_dist1 = round(dist+0.1, 2)
                                 conta_min_energia += 1
@@ -337,29 +365,37 @@ for gas_nobre in gases_nobres:
                     if metodo == 'sapt0':
                         n = len(distancias)
                         if n == 1:
-                            psi4.geometry(dimero)
-                            psi4.energy(nivel)
-                            eelst.append(psi4.variable('SAPT ELST ENERGY') * 27211.4)
-                            eind.append(psi4.variable('SAPT IND ENERGY') * 27211.4)
-                            edisp.append(psi4.variable('SAPT DISP ENERGY') * 27211.4)
-                            eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
-                            esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
-                            psi4.core.clean()
+                            eel = calcula_energia(metodo, base, dimero)[0]
+                            eid = calcula_energia(metodo, base, dimero)[1]
+                            edi = calcula_energia(metodo, base, dimero)[2]
+                            exh = calcula_energia(metodo, base, dimero)[3]
+                            esap = calcula_energia(metodo, base, dimero)[4]
+
+                            eelst.append(eel)
+                            eind.append(eid)
+                            edisp.append(edi)
+                            eexch.append(exh)
+                            esapt.append(esap)
+
                             dist = round(int_ini + inc_ini, 2)
                             distancias.append(dist)
                         else:
-                            psi4.geometry(dimero)
-                            psi4.energy(nivel)
-                            eelst.append(psi4.variable('SAPT ELST ENERGY') * 27211.4)
-                            eind.append(psi4.variable('SAPT IND ENERGY') * 27211.4)
-                            edisp.append(psi4.variable('SAPT DISP ENERGY') * 27211.4)
-                            eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
-                            esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
-                            psi4.core.clean()
-                            if en_com_cp[-1] - en_com_cp[-2] < 0:
+                            eel = calcula_energia(metodo, base, dimero)[0]
+                            eid = calcula_energia(metodo, base, dimero)[1]
+                            edi = calcula_energia(metodo, base, dimero)[2]
+                            exh = calcula_energia(metodo, base, dimero)[3]
+                            esap = calcula_energia(metodo, base, dimero)[4]
+
+                            eelst.append(eel)
+                            eind.append(eid)
+                            edisp.append(edi)
+                            eexch.append(exh)
+                            esapt.append(esap)
+
+                            if esapt[-1] - esapt[-2] < 0:
                                 nova_dist1 = round(dist+0.1, 2)
                                 conta_min_energia += 1
-                            elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min_energia >= 2:
+                            elif esapt[-1] - esapt[-2] < 0 and conta_min_energia >= 2:
                                 nova_dist1 = round(dist+0.05, 2)
                                 conta_min_energia += 1
                             else:
@@ -370,29 +406,37 @@ for gas_nobre in gases_nobres:
                     if metodo == 'sapt2':
                             n = len(distancias)
                             if n == 1:
-                                psi4.geometry(dimero)
-                                psi4.energy(nivel)
-                                eelst.append(psi4.variable('SAPT ELST ENERGY') * 27211.4)
-                                eind.append(psi4.variable('SAPT IND ENERGY') * 27211.4)
-                                edisp.append(psi4.variable('SAPT DISP ENERGY') * 27211.4)
-                                eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
-                                esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
-                                psi4.core.clean()
+                                eel = calcula_energia(metodo, base, dimero)[0]
+                                eid = calcula_energia(metodo, base, dimero)[1]
+                                edi = calcula_energia(metodo, base, dimero)[2]
+                                exh = calcula_energia(metodo, base, dimero)[3]
+                                esap = calcula_energia(metodo, base, dimero)[4]
+
+                                eelst.append(eel)
+                                eind.append(eid)
+                                edisp.append(edi)
+                                eexch.append(exh)
+                                esapt.append(esap)
+
                                 dist = round(int_ini + inc_ini, 2)
                                 distancias.append(dist)
                             else:
-                                psi4.geometry(dimero)
-                                psi4.energy(nivel)
-                                eelst.append(psi4.variable('SAPT ELST ENERGY') * 27211.4)
-                                eind.append(psi4.variable('SAPT IND ENERGY') * 27211.4)
-                                edisp.append(psi4.variable('SAPT DISP ENERGY') * 27211.4)
-                                eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
-                                esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
-                                psi4.core.clean()
-                                if en_com_cp[-1] - en_com_cp[-2] < 0:
+                                eel = calcula_energia(metodo, base, dimero)[0]
+                                eid = calcula_energia(metodo, base, dimero)[1]
+                                edi = calcula_energia(metodo, base, dimero)[2]
+                                exh = calcula_energia(metodo, base, dimero)[3]
+                                esap = calcula_energia(metodo, base, dimero)[4]
+
+                                eelst.append(eel)
+                                eind.append(eid)
+                                edisp.append(edi)
+                                eexch.append(exh)
+                                esapt.append(esap)
+
+                                if esapt[-1] - esapt[-2] < 0:
                                     nova_dist1 = round(dist+0.1, 2)
                                     conta_min_energia += 1
-                                elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min_energia >= 2:
+                                elif esapt[-1] - esapt[-2] < 0 and conta_min_energia >= 2:
                                     nova_dist1 = round(dist+0.05, 2)
                                     conta_min_energia += 1
                                 else:
@@ -403,29 +447,37 @@ for gas_nobre in gases_nobres:
                     if metodo == 'sapt2+':
                             n = len(distancias)
                             if n == 1:
-                                psi4.geometry(dimero)
-                                psi4.energy(nivel)
-                                eelst.append(psi4.variable('SAPT ELST ENERGY') * 27211.4)
-                                eind.append(psi4.variable('SAPT IND ENERGY') * 27211.4)
-                                edisp.append(psi4.variable('SAPT DISP ENERGY') * 27211.4)
-                                eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
-                                esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
-                                psi4.core.clean()
+                                eel = calcula_energia(metodo, base, dimero)[0]
+                                eid = calcula_energia(metodo, base, dimero)[1]
+                                edi = calcula_energia(metodo, base, dimero)[2]
+                                exh = calcula_energia(metodo, base, dimero)[3]
+                                esap = calcula_energia(metodo, base, dimero)[4]
+
+                                eelst.append(eel)
+                                eind.append(eid)
+                                edisp.append(edi)
+                                eexch.append(exh)
+                                esapt.append(esap)
+
                                 dist = round(int_ini + inc_ini, 2)
                                 distancias.append(dist)
                             else:
-                                psi4.geometry(dimero)
-                                psi4.energy(nivel)
-                                eelst.append(psi4.variable('SAPT ELST ENERGY') * 27211.4)
-                                eind.append(psi4.variable('SAPT IND ENERGY') * 27211.4)
-                                edisp.append(psi4.variable('SAPT DISP ENERGY') * 27211.4)
-                                eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
-                                esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
-                                psi4.core.clean()
-                                if en_com_cp[-1] - en_com_cp[-2] < 0:
+                                eel = calcula_energia(metodo, base, dimero)[0]
+                                eid = calcula_energia(metodo, base, dimero)[1]
+                                edi = calcula_energia(metodo, base, dimero)[2]
+                                exh = calcula_energia(metodo, base, dimero)[3]
+                                esap = calcula_energia(metodo, base, dimero)[4]
+
+                                eelst.append(eel)
+                                eind.append(eid)
+                                edisp.append(edi)
+                                eexch.append(exh)
+                                esapt.append(esap)
+
+                                if esapt[-1] - esapt[-2] < 0:
                                     nova_dist1 = round(dist+0.1, 2)
                                     conta_min_energia += 1
-                                elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min_energia >= 2:
+                                elif esapt[-1] - esapt[-2] < 0 and conta_min_energia >= 2:
                                     nova_dist1 = round(dist+0.05, 2)
                                     conta_min_energia += 1
                                 else:
@@ -436,29 +488,37 @@ for gas_nobre in gases_nobres:
                     if metodo == 'sapt2+(3)':
                             n = len(distancias)
                             if n == 1:
-                                psi4.geometry(dimero)
-                                psi4.energy(nivel)
-                                eelst.append(psi4.variable('SAPT ELST ENERGY') * 27211.4)
-                                eind.append(psi4.variable('SAPT IND ENERGY') * 27211.4)
-                                edisp.append(psi4.variable('SAPT DISP ENERGY') * 27211.4)
-                                eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
-                                esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
-                                psi4.core.clean()
+                                eel = calcula_energia(metodo, base, dimero)[0]
+                                eid = calcula_energia(metodo, base, dimero)[1]
+                                edi = calcula_energia(metodo, base, dimero)[2]
+                                exh = calcula_energia(metodo, base, dimero)[3]
+                                esap = calcula_energia(metodo, base, dimero)[4]
+
+                                eelst.append(eel)
+                                eind.append(eid)
+                                edisp.append(edi)
+                                eexch.append(exh)
+                                esapt.append(esap)
+
                                 dist = round(int_ini + inc_ini, 2)
                                 distancias.append(dist)
                             else:
-                                psi4.geometry(dimero)
-                                psi4.energy(nivel)
-                                eelst.append(psi4.variable('SAPT ELST ENERGY') * 27211.4)
-                                eind.append(psi4.variable('SAPT IND ENERGY') * 27211.4)
-                                edisp.append(psi4.variable('SAPT DISP ENERGY') * 27211.4)
-                                eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
-                                esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
-                                psi4.core.clean()
-                                if en_com_cp[-1] - en_com_cp[-2] < 0:
+                                eel = calcula_energia(metodo, base, dimero)[0]
+                                eid = calcula_energia(metodo, base, dimero)[1]
+                                edi = calcula_energia(metodo, base, dimero)[2]
+                                exh = calcula_energia(metodo, base, dimero)[3]
+                                esap = calcula_energia(metodo, base, dimero)[4]
+
+                                eelst.append(eel)
+                                eind.append(eid)
+                                edisp.append(edi)
+                                eexch.append(exh)
+                                esapt.append(esap)
+
+                                if esapt[-1] - esapt[-2] < 0:
                                     nova_dist1 = round(dist+0.1, 2)
                                     conta_min_energia += 1
-                                elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min_energia >= 2:
+                                elif esapt[-1] - esapt[-2] < 0 and conta_min_energia >= 2:
                                     nova_dist1 = round(dist+0.05, 2)
                                     conta_min_energia += 1
                                 else:
@@ -469,29 +529,37 @@ for gas_nobre in gases_nobres:
                     if metodo == 'sapt2+3':
                         n = len(distancias)
                         if n == 1:
-                            psi4.geometry(dimero)
-                            psi4.energy(nivel)
-                            eelst.append(psi4.variable('SAPT ELST ENERGY') * 27211.4)
-                            eind.append(psi4.variable('SAPT IND ENERGY') * 27211.4)
-                            edisp.append(psi4.variable('SAPT DISP ENERGY') * 27211.4)
-                            eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
-                            esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
-                            psi4.core.clean()
+                            eel = calcula_energia(metodo, base, dimero)[0]
+                            eid = calcula_energia(metodo, base, dimero)[1]
+                            edi = calcula_energia(metodo, base, dimero)[2]
+                            exh = calcula_energia(metodo, base, dimero)[3]
+                            esap = calcula_energia(metodo, base, dimero)[4]
+
+                            eelst.append(eel)
+                            eind.append(eid)
+                            edisp.append(edi)
+                            eexch.append(exh)
+                            esapt.append(esap)
+
                             dist = round(int_ini + inc_ini, 2)
                             distancias.append(dist)
                         else:
-                            psi4.geometry(dimero)
-                            psi4.energy(nivel)
-                            eelst.append(psi4.variable('SAPT ELST ENERGY') * 27211.4)
-                            eind.append(psi4.variable('SAPT IND ENERGY') * 27211.4)
-                            edisp.append(psi4.variable('SAPT DISP ENERGY') * 27211.4)
-                            eexch.append(psi4.variable('SAPT EXCH ENERGY') * 27211.4)
-                            esapt.append(psi4.variable('SAPT TOTAL ENERGY') * 27211.4)
-                            psi4.core.clean()
-                            if en_com_cp[-1] - en_com_cp[-2] < 0:
+                            eel = calcula_energia(metodo, base, dimero)[0]
+                            eid = calcula_energia(metodo, base, dimero)[1]
+                            edi = calcula_energia(metodo, base, dimero)[2]
+                            exh = calcula_energia(metodo, base, dimero)[3]
+                            esap = calcula_energia(metodo, base, dimero)[4]
+
+                            eelst.append(eel)
+                            eind.append(eid)
+                            edisp.append(edi)
+                            eexch.append(exh)
+                            esapt.append(esap)
+
+                            if esapt[-1] - esapt[-2] < 0:
                                 nova_dist1 = round(dist+0.1, 2)
                                 conta_min_energia += 1
-                            elif en_com_cp[-1] - en_com_cp[-2] < 0 and conta_min_energia >= 2:
+                            elif esapt[-1] - esapt[-2] < 0 and conta_min_energia >= 2:
                                 nova_dist1 = round(dist+0.05, 2)
                                 conta_min_energia += 1
                             else:
