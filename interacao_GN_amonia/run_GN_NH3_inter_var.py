@@ -6,16 +6,50 @@ import subprocess
 import time
 
 
-def calcula_energia(metodo, base, dimero):
+def calcula_energia(metodo, base, dimero, fator_conversao=1):
+    '''
+    Essa função calcula a energia de interação de certo sistema, portanto
+    recebe como parâmetros o método do cálculo a base e o sistemas que neste
+    caso chamamos de dímero. Caso queira mudar a unidade de medida padrão
+    da energia que é hartree, deverá atribuir um valor para o fator de conversão.
+    Se não for passado nenhum valor de fator de conversão
+    esse será igual a 1, pois 1 é elemento neutro da multiplicação.
+
+    Dependendo do método passado a função retornará uma tupla.
+
+    Para métodos como ccsd, ccsd(t), mp2, mp4 ou sherrill_gold_standard a tupla
+    é formada pela energia sem cálculo de counterpoise e com cálculo de
+    conterpoise.
+
+    Exemplo1: energia[ccsd/aug-cc-pvdz] = (energia_sem_counterpoisi,
+                                           energia_com_conterpoise)
+
+    O Exemplo1 mostra a energia sendo calculada com método ccsd na base aug-cc-
+    pvdz e a tupla que é retornada pela função.
+
+    No caso do método ser sapt a função retorna uma tupla com  as componentes
+    energia eletrostática, energia de indução, energia de dispersão, energia
+    de troca e energia sapt total.
+
+    Exemplo2: energia[sapt0/aug-cc-pvdz] = (energia_eletrostática,
+                                            energia_indução,
+                                            energia_dispersão,
+                                            energia_troca,
+                                            energia_total)
+
+    O Exemplo2 mostra a energia sendo calculada com método sapt0 na base aug-cc-
+    pvdz e a tupla que a função retorna.
+    '''
+
     if metodo == 'sherrill_gold_standard':
         psi4.geometry(dimero)
         psi4.energy(f'{metodo}', bsse_type=['nocp', 'cp',])
 
         e_s_cp = psi4.variable(
-                'NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
+                'NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * fator_conversao
 
         e_c_cp = psi4.variable(
-                'CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
+                'CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * fator_conversao
         psi4.core.clean()
 
         return e_s_cp, e_c_cp
@@ -26,21 +60,21 @@ def calcula_energia(metodo, base, dimero):
         psi4.energy(f'{metodo}/{base}', bsse_type=['nocp', 'cp',])
 
         e_s_cp = psi4.variable(
-                'NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
+                'NOCP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * fator_conversao
 
         e_c_cp = psi4.variable(
-                'CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * 27211.4
+                'CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * fator_conversao
         psi4.core.clean()
 
         return e_s_cp, e_c_cp
     else:
         psi4.geometry(dimero)
         psi4.energy(f'{metodo}/{base}')
-        eels = psi4.variable('SAPT ELST ENERGY') * 27211.4
-        eind = psi4.variable('SAPT IND ENERGY') * 27211.4
-        edis = psi4.variable('SAPT DISP ENERGY') * 27211.4
-        exch = psi4.variable('SAPT EXCH ENERGY') * 27211.4
-        esap = psi4.variable('SAPT TOTAL ENERGY') * 27211.4
+        eels = psi4.variable('SAPT ELST ENERGY') * fator_conversao
+        eind = psi4.variable('SAPT IND ENERGY') * fator_conversao
+        edis = psi4.variable('SAPT DISP ENERGY') * fator_conversao
+        exch = psi4.variable('SAPT EXCH ENERGY') * fator_conversao
+        esap = psi4.variable('SAPT TOTAL ENERGY') * fator_conversao
 
         return eels, eind, edis, exch, esap
 
@@ -206,6 +240,8 @@ nova_dist1 = 0
 # hartree para meV. Assim a variável é hartree2meV, como o fator de conversão
 # é 27211.399
 hartree2meV = 27211.399
+# fator_conv é a variavel que irá receber o fator de conversão do seu interesse
+fator_conv = hartree2meV
 
 for gas_nobre in gases_nobres:
     cria_diretorio(gas_nobre)
@@ -240,15 +276,15 @@ for gas_nobre in gases_nobres:
                     if metodo == 'sherrill_gold_standard':
                         n = len(distancias)
                         if n == 1:
-                            en1 = calcula_energia(metodo, base, dimero)[0]
-                            en2 = calcula_energia(metodo, base, dimero)[1]
+                            en1 = calcula_energia(metodo, base, dimero, fator_conv)[0]
+                            en2 = calcula_energia(metodo, base, dimero, fator_conv)[1]
                             en_sem_cp.append(en1)
                             en_com_cp.append(en2)
                             dist = round(int_ini + inc_ini, 2)
                             distancias.append(dist)
                         else:
-                            en1 = calcula_energia(metodo, base, dimero)[0]
-                            en2 = calcula_energia(metodo, base, dimero)[1]
+                            en1 = calcula_energia(metodo, base, dimero, fator_conv)[0]
+                            en2 = calcula_energia(metodo, base, dimero, fator_conv)[1]
                             en_sem_cp.append(en1)
                             en_com_cp.append(en2)
                             if en_com_cp[-1] - en_com_cp[-2] < 0:
@@ -265,15 +301,15 @@ for gas_nobre in gases_nobres:
                     if metodo == 'ccsd(t)':
                         n = len(distancias)
                         if n == 1:
-                            en1 = calcula_energia(metodo, base, dimero)[0]
-                            en2 = calcula_energia(metodo, base, dimero)[1]
+                            en1 = calcula_energia(metodo, base, dimero, fator_conv)[0]
+                            en2 = calcula_energia(metodo, base, dimero, fator_conv)[1]
                             en_sem_cp.append(en1)
                             en_com_cp.append(en2)
                             dist = round(int_ini + inc_ini, 2)
                             distancias.append(dist)
                         else:
-                            en1 = calcula_energia(metodo, base, dimero)[0]
-                            en2 = calcula_energia(metodo, base, dimero)[1]
+                            en1 = calcula_energia(metodo, base, dimero, fator_conv)[0]
+                            en2 = calcula_energia(metodo, base, dimero, fator_conv)[1]
                             en_sem_cp.append(en1)
                             en_com_cp.append(en2)
                             if en_com_cp[-1] - en_com_cp[-2] < 0:
@@ -290,15 +326,15 @@ for gas_nobre in gases_nobres:
                     if metodo == 'ccsd':
                         n = len(distancias)
                         if n == 1:
-                            en1 = calcula_energia(metodo, base, dimero)[0]
-                            en2 = calcula_energia(metodo, base, dimero)[1]
+                            en1 = calcula_energia(metodo, base, dimero, fator_conv)[0]
+                            en2 = calcula_energia(metodo, base, dimero, fator_conv)[1]
                             en_sem_cp.append(en1)
                             en_com_cp.append(en2)
                             dist = round(int_ini + inc_ini, 2)
                             distancias.append(dist)
                         else:
-                            en1 = calcula_energia(metodo, base, dimero)[0]
-                            en2 = calcula_energia(metodo, base, dimero)[1]
+                            en1 = calcula_energia(metodo, base, dimero, fator_conv)[0]
+                            en2 = calcula_energia(metodo, base, dimero, fator_conv)[1]
                             en_sem_cp.append(en1)
                             en_com_cp.append(en2)
                             if en_com_cp[-1] - en_com_cp[-2] < 0:
@@ -315,15 +351,15 @@ for gas_nobre in gases_nobres:
                     if metodo == 'mp2':
                         n = len(distancias)
                         if n == 1:
-                            en1 = calcula_energia(metodo, base, dimero)[0]
-                            en2 = calcula_energia(metodo, base, dimero)[1]
+                            en1 = calcula_energia(metodo, base, dimero, fator_conv)[0]
+                            en2 = calcula_energia(metodo, base, dimero, fator_conv)[1]
                             en_sem_cp.append(en1)
                             en_com_cp.append(en2)
                             dist = round(int_ini + inc_ini, 2)
                             distancias.append(dist)
                         else:
-                            en1 = calcula_energia(metodo, base, dimero)[0]
-                            en2 = calcula_energia(metodo, base, dimero)[1]
+                            en1 = calcula_energia(metodo, base, dimero, fator_conv)[0]
+                            en2 = calcula_energia(metodo, base, dimero, fator_conv)[1]
                             en_sem_cp.append(en1)
                             en_com_cp.append(en2)
                             if en_com_cp[-1] - en_com_cp[-2] < 0:
@@ -340,15 +376,15 @@ for gas_nobre in gases_nobres:
                     if metodo == 'mp4':
                         n = len(distancias)
                         if n == 1:
-                            en1 = calcula_energia(metodo, base, dimero)[0]
-                            en2 = calcula_energia(metodo, base, dimero)[1]
+                            en1 = calcula_energia(metodo, base, dimero, fator_conv)[0]
+                            en2 = calcula_energia(metodo, base, dimero, fator_conv)[1]
                             en_sem_cp.append(en1)
                             en_com_cp.append(en2)
                             dist = round(int_ini + inc_ini, 2)
                             distancias.append(dist)
                         else:
-                            en1 = calcula_energia(metodo, base, dimero)[0]
-                            en2 = calcula_energia(metodo, base, dimero)[1]
+                            en1 = calcula_energia(metodo, base, dimero, fator_conv)[0]
+                            en2 = calcula_energia(metodo, base, dimero, fator_conv)[1]
                             en_sem_cp.append(en1)
                             en_com_cp.append(en2)
                             if en_com_cp[-1] - en_com_cp[-2] < 0:
@@ -365,11 +401,11 @@ for gas_nobre in gases_nobres:
                     if metodo == 'sapt0':
                         n = len(distancias)
                         if n == 1:
-                            eel = calcula_energia(metodo, base, dimero)[0]
-                            eid = calcula_energia(metodo, base, dimero)[1]
-                            edi = calcula_energia(metodo, base, dimero)[2]
-                            exh = calcula_energia(metodo, base, dimero)[3]
-                            esap = calcula_energia(metodo, base, dimero)[4]
+                            eel = calcula_energia(metodo, base, dimero, fator_conv)[0]
+                            eid = calcula_energia(metodo, base, dimero, fator_conv)[1]
+                            edi = calcula_energia(metodo, base, dimero, fator_conv)[2]
+                            exh = calcula_energia(metodo, base, dimero, fator_conv)[3]
+                            esap = calcula_energia(metodo, base, dimero, fator_conv)[4]
 
                             eelst.append(eel)
                             eind.append(eid)
@@ -380,11 +416,11 @@ for gas_nobre in gases_nobres:
                             dist = round(int_ini + inc_ini, 2)
                             distancias.append(dist)
                         else:
-                            eel = calcula_energia(metodo, base, dimero)[0]
-                            eid = calcula_energia(metodo, base, dimero)[1]
-                            edi = calcula_energia(metodo, base, dimero)[2]
-                            exh = calcula_energia(metodo, base, dimero)[3]
-                            esap = calcula_energia(metodo, base, dimero)[4]
+                            eel = calcula_energia(metodo, base, dimero, fator_conv)[0]
+                            eid = calcula_energia(metodo, base, dimero, fator_conv)[1]
+                            edi = calcula_energia(metodo, base, dimero, fator_conv)[2]
+                            exh = calcula_energia(metodo, base, dimero, fator_conv)[3]
+                            esap = calcula_energia(metodo, base, dimero, fator_conv)[4]
 
                             eelst.append(eel)
                             eind.append(eid)
@@ -406,11 +442,11 @@ for gas_nobre in gases_nobres:
                     if metodo == 'sapt2':
                             n = len(distancias)
                             if n == 1:
-                                eel = calcula_energia(metodo, base, dimero)[0]
-                                eid = calcula_energia(metodo, base, dimero)[1]
-                                edi = calcula_energia(metodo, base, dimero)[2]
-                                exh = calcula_energia(metodo, base, dimero)[3]
-                                esap = calcula_energia(metodo, base, dimero)[4]
+                                eel = calcula_energia(metodo, base, dimero, fator_conv)[0]
+                                eid = calcula_energia(metodo, base, dimero, fator_conv)[1]
+                                edi = calcula_energia(metodo, base, dimero, fator_conv)[2]
+                                exh = calcula_energia(metodo, base, dimero, fator_conv)[3]
+                                esap = calcula_energia(metodo, base, dimero, fator_conv)[4]
 
                                 eelst.append(eel)
                                 eind.append(eid)
@@ -421,11 +457,11 @@ for gas_nobre in gases_nobres:
                                 dist = round(int_ini + inc_ini, 2)
                                 distancias.append(dist)
                             else:
-                                eel = calcula_energia(metodo, base, dimero)[0]
-                                eid = calcula_energia(metodo, base, dimero)[1]
-                                edi = calcula_energia(metodo, base, dimero)[2]
-                                exh = calcula_energia(metodo, base, dimero)[3]
-                                esap = calcula_energia(metodo, base, dimero)[4]
+                                eel = calcula_energia(metodo, base, dimero, fator_conv)[0]
+                                eid = calcula_energia(metodo, base, dimero, fator_conv)[1]
+                                edi = calcula_energia(metodo, base, dimero, fator_conv)[2]
+                                exh = calcula_energia(metodo, base, dimero, fator_conv)[3]
+                                esap = calcula_energia(metodo, base, dimero, fator_conv)[4]
 
                                 eelst.append(eel)
                                 eind.append(eid)
@@ -447,11 +483,11 @@ for gas_nobre in gases_nobres:
                     if metodo == 'sapt2+':
                             n = len(distancias)
                             if n == 1:
-                                eel = calcula_energia(metodo, base, dimero)[0]
-                                eid = calcula_energia(metodo, base, dimero)[1]
-                                edi = calcula_energia(metodo, base, dimero)[2]
-                                exh = calcula_energia(metodo, base, dimero)[3]
-                                esap = calcula_energia(metodo, base, dimero)[4]
+                                eel = calcula_energia(metodo, base, dimero, fator_conv)[0]
+                                eid = calcula_energia(metodo, base, dimero, fator_conv)[1]
+                                edi = calcula_energia(metodo, base, dimero, fator_conv)[2]
+                                exh = calcula_energia(metodo, base, dimero, fator_conv)[3]
+                                esap = calcula_energia(metodo, base, dimero, fator_conv)[4]
 
                                 eelst.append(eel)
                                 eind.append(eid)
@@ -462,11 +498,11 @@ for gas_nobre in gases_nobres:
                                 dist = round(int_ini + inc_ini, 2)
                                 distancias.append(dist)
                             else:
-                                eel = calcula_energia(metodo, base, dimero)[0]
-                                eid = calcula_energia(metodo, base, dimero)[1]
-                                edi = calcula_energia(metodo, base, dimero)[2]
-                                exh = calcula_energia(metodo, base, dimero)[3]
-                                esap = calcula_energia(metodo, base, dimero)[4]
+                                eel = calcula_energia(metodo, base, dimero, fator_conv)[0]
+                                eid = calcula_energia(metodo, base, dimero, fator_conv)[1]
+                                edi = calcula_energia(metodo, base, dimero, fator_conv)[2]
+                                exh = calcula_energia(metodo, base, dimero, fator_conv)[3]
+                                esap = calcula_energia(metodo, base, dimero, fator_conv)[4]
 
                                 eelst.append(eel)
                                 eind.append(eid)
@@ -488,11 +524,11 @@ for gas_nobre in gases_nobres:
                     if metodo == 'sapt2+(3)':
                             n = len(distancias)
                             if n == 1:
-                                eel = calcula_energia(metodo, base, dimero)[0]
-                                eid = calcula_energia(metodo, base, dimero)[1]
-                                edi = calcula_energia(metodo, base, dimero)[2]
-                                exh = calcula_energia(metodo, base, dimero)[3]
-                                esap = calcula_energia(metodo, base, dimero)[4]
+                                eel = calcula_energia(metodo, base, dimero, fator_conv)[0]
+                                eid = calcula_energia(metodo, base, dimero, fator_conv)[1]
+                                edi = calcula_energia(metodo, base, dimero, fator_conv)[2]
+                                exh = calcula_energia(metodo, base, dimero, fator_conv)[3]
+                                esap = calcula_energia(metodo, base, dimero, fator_conv)[4]
 
                                 eelst.append(eel)
                                 eind.append(eid)
@@ -503,11 +539,11 @@ for gas_nobre in gases_nobres:
                                 dist = round(int_ini + inc_ini, 2)
                                 distancias.append(dist)
                             else:
-                                eel = calcula_energia(metodo, base, dimero)[0]
-                                eid = calcula_energia(metodo, base, dimero)[1]
-                                edi = calcula_energia(metodo, base, dimero)[2]
-                                exh = calcula_energia(metodo, base, dimero)[3]
-                                esap = calcula_energia(metodo, base, dimero)[4]
+                                eel = calcula_energia(metodo, base, dimero, fator_conv)[0]
+                                eid = calcula_energia(metodo, base, dimero, fator_conv)[1]
+                                edi = calcula_energia(metodo, base, dimero, fator_conv)[2]
+                                exh = calcula_energia(metodo, base, dimero, fator_conv)[3]
+                                esap = calcula_energia(metodo, base, dimero, fator_conv)[4]
 
                                 eelst.append(eel)
                                 eind.append(eid)
@@ -529,11 +565,11 @@ for gas_nobre in gases_nobres:
                     if metodo == 'sapt2+3':
                         n = len(distancias)
                         if n == 1:
-                            eel = calcula_energia(metodo, base, dimero)[0]
-                            eid = calcula_energia(metodo, base, dimero)[1]
-                            edi = calcula_energia(metodo, base, dimero)[2]
-                            exh = calcula_energia(metodo, base, dimero)[3]
-                            esap = calcula_energia(metodo, base, dimero)[4]
+                            eel = calcula_energia(metodo, base, dimero, fator_conv)[0]
+                            eid = calcula_energia(metodo, base, dimero, fator_conv)[1]
+                            edi = calcula_energia(metodo, base, dimero, fator_conv)[2]
+                            exh = calcula_energia(metodo, base, dimero, fator_conv)[3]
+                            esap = calcula_energia(metodo, base, dimero, fator_conv)[4]
 
                             eelst.append(eel)
                             eind.append(eid)
@@ -544,11 +580,11 @@ for gas_nobre in gases_nobres:
                             dist = round(int_ini + inc_ini, 2)
                             distancias.append(dist)
                         else:
-                            eel = calcula_energia(metodo, base, dimero)[0]
-                            eid = calcula_energia(metodo, base, dimero)[1]
-                            edi = calcula_energia(metodo, base, dimero)[2]
-                            exh = calcula_energia(metodo, base, dimero)[3]
-                            esap = calcula_energia(metodo, base, dimero)[4]
+                            eel = calcula_energia(metodo, base, dimero, fator_conv)[0]
+                            eid = calcula_energia(metodo, base, dimero, fator_conv)[1]
+                            edi = calcula_energia(metodo, base, dimero, fator_conv)[2]
+                            exh = calcula_energia(metodo, base, dimero, fator_conv)[3]
+                            esap = calcula_energia(metodo, base, dimero, fator_conv)[4]
 
                             eelst.append(eel)
                             eind.append(eid)
@@ -580,5 +616,6 @@ for gas_nobre in gases_nobres:
                     nome_arq_out = metodo +  sitio_inte + '.dat'
                     cria_arquivo(nome_arq_out, metodo, distancias, en_sem_cp, en_com_cp,
                                  eelst, eind, edisp, eexch, esapt)
-                    move_arquivo(nome_arq_out, gas_nobre, metodo, base='_')
+                    move_arquivo(nome_arq_out, gas_nobre, metodo, base='')
+
             move_diretorio(gas_nobre, metodo, base)
