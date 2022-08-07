@@ -53,7 +53,7 @@ def calcula_energia(metodo, base, dimero, fator_conversao=1):
                 'CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * fator_conversao
         psi4.core.clean()
 
-        return e_s_cp, e_c_cp
+        energia = e_s_cp, e_c_cp
 
     metodo_nao_e_sapt = ('ccsd', 'ccsd(t)', 'mp2', 'mp4')
     if metodo in metodo_nao_e_sapt:
@@ -67,7 +67,7 @@ def calcula_energia(metodo, base, dimero, fator_conversao=1):
                 'CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * fator_conversao
         psi4.core.clean()
 
-        return e_s_cp, e_c_cp
+        energia = e_s_cp, e_c_cp
     else:
         psi4.geometry(dimero)
         psi4.energy(f'{metodo}/{base}')
@@ -77,8 +77,9 @@ def calcula_energia(metodo, base, dimero, fator_conversao=1):
         exch = psi4.variable('SAPT EXCH ENERGY') * fator_conversao
         esap = psi4.variable('SAPT TOTAL ENERGY') * fator_conversao
 
-        return eels, eind, edis, exch, esap
+        energia = eels, eind, edis, exch, esap
 
+    return energia
 
 def cria_diretorio(gas, metodo='sem_metodo', base='sem_base'):
     '''
@@ -116,10 +117,12 @@ def input_geo(geo, gas, d):
     return input
 
 
-def cria_arquivo(nome, metodo, dist, eint1, eint2, eint3, eint4, eint5, eint6, eint7):
+def cria_arquivo(nome, metodo, dist, eint1, eint2, eint3, eint4, eint5, eint6, eint7,
+                 fator_conversao):
+    unidade_energia = fator_conversao.split('2')[1]
     if metodo == 'ccsd(t)':
         with open(nome, 'w') as f:
-            print(f'# Distancia [angstrom]    |   Energia [meV]', end='\n', file=f)
+            print(f'# Distancia [angstrom]    |   Energia [{unidade_energia}]', end='\n', file=f)
             print(f'# -----------------------------------------', end='\n', file=f)
             print(f'# Dist   Eint CCSD(T)-NOCP  Eint CCSD(T)-CP', end='\n', file=f)
             print(f'# -----------------------------------------', end='\n', file=f)
@@ -128,7 +131,7 @@ def cria_arquivo(nome, metodo, dist, eint1, eint2, eint3, eint4, eint5, eint6, e
 
     if metodo == 'ccsd':
         with open(nome, 'w') as f:
-            print(f'# Distancia [angstrom]    |   Energia [meV]', end='\n', file=f)
+            print(f'# Distancia [angstrom]    |   Energia [{unidade_energia}]', end='\n', file=f)
             print(f'# -----------------------------------------', end='\n', file=f)
             print(f'# Dist    Eint CCSD-NOCP    Eint CCSD-CP', end='\n', file=f)
             print(f'# -----------------------------------------', end='\n', file=f)
@@ -137,7 +140,7 @@ def cria_arquivo(nome, metodo, dist, eint1, eint2, eint3, eint4, eint5, eint6, e
 
     if metodo == 'mp2':
         with open(nome, 'w') as f:
-            print(f'# Distancia [angstrom]    |   Energia [meV]', end='\n', file=f)
+            print(f'# Distancia [angstrom]    |   Energia [{unidade_energia}]', end='\n', file=f)
             print(f'# -----------------------------------------', end='\n', file=f)
             print(f'# Dist    Eint MP2-NOCP    Eint MP2-CP', end='\n', file=f)
             print(f'# -----------------------------------------', end='\n', file=f)
@@ -146,7 +149,7 @@ def cria_arquivo(nome, metodo, dist, eint1, eint2, eint3, eint4, eint5, eint6, e
 
     if metodo == 'mp4':
         with open(nome, 'w') as f:
-            print(f'# Distancia [angstrom]    |   Energia [meV]', end='\n', file=f)
+            print(f'# Distancia [angstrom]    |   Energia [{unidade_energia}]', end='\n', file=f)
             print(f'# -----------------------------------------', end='\n', file=f)
             print(f'# Dist    Eint MP4-NOCP    Eint MP4-CP', end='\n', file=f)
             print(f'# -----------------------------------------', end='\n', file=f)
@@ -155,7 +158,7 @@ def cria_arquivo(nome, metodo, dist, eint1, eint2, eint3, eint4, eint5, eint6, e
 
     if metodo == 'sherrill_gold_standard':
         with open(nome, 'w') as f:
-            print(f'# Distancia [angstrom]    |   Energia [meV]', end='\n', file=f)
+            print(f'# Distancia [angstrom]    |   Energia [{unidade_energia}]', end='\n', file=f)
             print(f'# -----------------------------------------', end='\n', file=f)
             print(f'# Dist    Eint SGS-NOCP    Eint SGS-CP', end='\n', file=f)
             print(f'# -----------------------------------------', end='\n', file=f)
@@ -165,7 +168,7 @@ def cria_arquivo(nome, metodo, dist, eint1, eint2, eint3, eint4, eint5, eint6, e
     metodos_perturbativos = ('sapt0', 'sapt2', 'sapt2+', 'sapt2+(3)', 'sapt2+3')
     if metodo in metodos_perturbativos:
         with open(nome_arq_out, 'w') as f:
-            print(f'#                        Distancia [angstrom]    |   Energia [meV]', end='\n', file=f)
+            print(f'#                        Distancia [angstrom]    |   Energia [{unidade_energia}]', end='\n', file=f)
             print(f'# ---------------------------------------------------------------------------------------------------------------', end='\n', file=f)
             print(f'# Dist    Energia Eletrostatica       Energia Inducao        Energia Dispercao      Energia EXCH     Energia Sapt', end='\n', file=f)
             print(f'# ---------------------------------------------------------------------------------------------------------------', end='\n', file=f)
@@ -208,7 +211,7 @@ geometrias_amonia = glob('*_sapt.xyz')
 #metodos = ['ccsd', 'ccsd(t)', 'mp2', 'mp4', 'sapt0','sapt2', 'sapt2+',
 #           'sapt2+(3)', 'sapt2+3', 'sherrill_gold_standard']
 
-metodos = ['sapt0','sapt2', 'sapt2+', 'sapt2+(3)']
+metodos = ['sapt0', 'sapt2', 'sapt2+', 'sapt2+(3)']
 
 bases = ['jun-cc-pvdz',]
 
@@ -243,6 +246,10 @@ nova_dist1 = 0
 hartree2meV = 27211.399
 # fator_conv é a variavel que irá receber o fator de conversão do seu interesse
 fator_conv = hartree2meV
+# tipo_conversao_energia revebe a conversão que buscamos executar, neste caso
+# queremos converter de hartree para meV. É importante para apresentar os dados
+# na função que cria os arquivos
+tipo_conversao_energia = 'hartree2meV'
 
 for gas_nobre in gases_nobres:
     cria_diretorio(gas_nobre)
@@ -610,13 +617,13 @@ for gas_nobre in gases_nobres:
                     sitio_inte = geo.replace('sapt.xyz', '').replace('amonia', '')
                     nome_arq_out = metodo +  sitio_inte + base + '.dat'
                     cria_arquivo(nome_arq_out, metodo, distancias, en_sem_cp, en_com_cp,
-                                 eelst, eind, edisp, eexch, esapt)
+                                 eelst, eind, edisp, eexch, esapt, tipo_conversao_energia)
                     move_arquivo(nome_arq_out, gas_nobre, metodo, base)
                 else:
                     sitio_inte = geo.replace('sapt.xyz', '').replace('amonia', '')
                     nome_arq_out = metodo +  sitio_inte + '.dat'
                     cria_arquivo(nome_arq_out, metodo, distancias, en_sem_cp, en_com_cp,
-                                 eelst, eind, edisp, eexch, esapt)
+                                 eelst, eind, edisp, eexch, esapt, tipo_conversao_energia)
                     move_arquivo(nome_arq_out, gas_nobre, metodo, base='')
 
             move_diretorio(gas_nobre, metodo, base)
