@@ -42,6 +42,8 @@ def calcula_energia(metodo, base, dimero, fator_conversao=1):
     pvdz e a tupla que a função retorna.
     '''
 
+    metodo_nao_e_sapt = ('ccsd', 'ccsd(t)', 'mp2', 'mp4')
+
     if metodo == 'sherrill_gold_standard':
         psi4.geometry(dimero)
         psi4.energy(f'{metodo}', bsse_type=['nocp', 'cp',])
@@ -52,11 +54,8 @@ def calcula_energia(metodo, base, dimero, fator_conversao=1):
         e_c_cp = psi4.variable(
                 'CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * fator_conversao
         psi4.core.clean()
-
         energia = e_s_cp, e_c_cp
-
-    metodo_nao_e_sapt = ('ccsd', 'ccsd(t)', 'mp2', 'mp4')
-    if metodo in metodo_nao_e_sapt:
+    elif metodo in metodo_nao_e_sapt:
         psi4.geometry(dimero)
         psi4.energy(f'{metodo}/{base}', bsse_type=['nocp', 'cp',])
 
@@ -66,7 +65,6 @@ def calcula_energia(metodo, base, dimero, fator_conversao=1):
         e_c_cp = psi4.variable(
                 'CP-CORRECTED INTERACTION ENERGY THROUGH 2-BODY') * fator_conversao
         psi4.core.clean()
-
         energia = e_s_cp, e_c_cp
     else:
         psi4.geometry(dimero)
@@ -76,7 +74,6 @@ def calcula_energia(metodo, base, dimero, fator_conversao=1):
         edis = psi4.variable('SAPT DISP ENERGY') * fator_conversao
         exch = psi4.variable('SAPT EXCH ENERGY') * fator_conversao
         esap = psi4.variable('SAPT TOTAL ENERGY') * fator_conversao
-
         energia = eels, eind, edis, exch, esap
 
     return energia
@@ -208,10 +205,11 @@ numpy_memory = 15
 
 geometrias_amonia = glob('*_sapt.xyz')
 
-#metodos = ['ccsd', 'ccsd(t)', 'mp2', 'mp4', 'sapt0','sapt2', 'sapt2+',
-#           'sapt2+(3)', 'sapt2+3', 'sherrill_gold_standard']
+metodos = ['ccsd', 'ccsd(t)', 'mp2', 'mp4',]
 
-metodos = ['sapt0', 'sapt2', 'sapt2+', 'sapt2+(3)']
+#metodos = ['sherrill_gold_standard']
+
+#metodos = ['sapt0', 'sapt2', 'sapt2+', 'sapt2+(3)']
 
 bases = ['jun-cc-pvdz',]
 
