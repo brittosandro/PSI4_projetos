@@ -238,9 +238,9 @@ nova_dist1 = 0
 # conveniente com nosso estudo poderemos listar esse fator pelas variáveis
 # abaixo.
 # No caso do estudo da interação entre gases nobres e amônia é muito conveniente
-# utilizarmos mili eletron volts (meV), portanto devemos transformar de
-# hartree para meV. Assim a variável é hartree2meV, como o fator de conversão
-# é 27211.399
+# utilizarmos mili eletron volts (meV), portanto devemos converter a unidade
+# padrão de energia de hartree para meV. 
+# Assim a variável é criada é hartree2meV, e o fator de conversão é 27211.399.
 hartree2meV = 27211.399
 # fator_conv é a variavel que irá receber o fator de conversão do seu interesse
 fator_conv = hartree2meV
